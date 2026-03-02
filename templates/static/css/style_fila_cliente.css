@@ -1,0 +1,612 @@
+:root{
+  --bg:#0b0c0e;
+  --panel:rgba(255,255,255,.03);
+  --panel2:rgba(255,255,255,.02);
+  --border:rgba(255,255,255,.08);
+
+  --text:#f4f5f7;
+  --muted:rgba(255,255,255,.55);
+
+  --accent:#ff7a00;
+  --accent2:#ff8f2a;
+
+  --ok:#2bd576;
+  --danger:#ff4d4d;
+
+  --radius:18px;
+}
+
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%}
+
+body{
+  font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+  background:
+    radial-gradient(1200px 700px at 50% 0%, rgba(255,122,0,.10), transparent 60%),
+    radial-gradient(900px 700px at 80% 30%, rgba(255,255,255,.05), transparent 55%),
+    var(--bg);
+  color:var(--text);
+  overflow-x:hidden;
+}
+
+.bg-glow{
+  position:fixed;
+  inset:-60px;
+  background:
+    radial-gradient(600px 400px at 50% 20%, rgba(255,122,0,.10), transparent 65%),
+    radial-gradient(500px 320px at 55% 55%, rgba(255,122,0,.06), transparent 70%);
+  pointer-events:none;
+  filter:blur(2px);
+}
+
+.wrap{
+  width:min(360px, 92vw);
+  margin:28px auto 40px;
+  position:relative;
+}
+
+.head{
+  text-align:center;
+  position:relative;
+  padding-top:6px;
+  margin-bottom:14px;
+}
+
+.brand{
+  font-weight:900;
+  letter-spacing:.2px;
+  font-size:18px;
+}
+.brand-accent{color:var(--accent)}
+.brand-white{color:#fff}
+.sub{
+  margin-top:4px;
+  font-size:12px;
+  color:var(--muted);
+}
+
+.icon-btn{
+  width:42px;height:42px;
+  border-radius:14px;
+  border:1px solid rgba(255,255,255,.10);
+  background:rgba(255,255,255,.03);
+  color:#fff;
+  display:grid;
+  place-items:center;
+  cursor:pointer;
+  transition:.2s ease;
+  position:absolute;
+  right:0;
+  top:0;
+}
+.icon-btn:hover{
+  background:rgba(255,255,255,.05);
+  transform:translateY(-1px);
+}
+.icon-btn.small{
+  width:36px;height:36px;
+  border-radius:12px;
+  position:static;
+}
+
+.card{
+  background:linear-gradient(180deg, var(--panel), var(--panel2));
+  border:1px solid var(--border);
+  border-radius:var(--radius);
+  box-shadow:0 14px 34px rgba(0,0,0,.40);
+  padding:14px;
+  margin:12px 0;
+}
+
+.card.highlight{
+  border-color:rgba(255,122,0,.28);
+  box-shadow:
+    0 18px 40px rgba(0,0,0,.45),
+    0 0 0 1px rgba(255,122,0,.06) inset;
+}
+
+.card-top{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  margin-bottom:10px;
+}
+
+.card-top.between{
+  justify-content:space-between;
+}
+
+.card-title{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  font-weight:800;
+  font-size:13px;
+  color:rgba(255,255,255,.90);
+}
+
+.card-title i{
+  width:28px;height:28px;
+  border-radius:12px;
+  background:rgba(255,122,0,.10);
+  border:1px solid rgba(255,122,0,.22);
+  color:var(--accent);
+  display:grid;
+  place-items:center;
+  font-size:14px;
+}
+
+/* posição */
+.pos{
+  padding:10px 8px 4px;
+}
+.pos-num{
+  font-size:38px;
+  font-weight:900;
+  letter-spacing:-1px;
+}
+.pos-sub{
+  margin-top:4px;
+  color:rgba(255,255,255,.65);
+  font-size:12px;
+}
+
+/* rows */
+.rows{
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+}
+.row{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  font-size:12px;
+}
+.k{color:rgba(255,255,255,.55)}
+.v{color:rgba(255,255,255,.90); font-weight:700}
+.v.accent{color:var(--accent); font-weight:900}
+.v.danger{color:var(--danger); font-weight:800}
+
+/* pill */
+.pill{
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  padding:8px 10px;
+  border-radius:999px;
+  width:max-content;
+  font-size:12px;
+  font-weight:800;
+  margin:6px 0 10px;
+}
+.pill.ok{
+  background:rgba(43,213,118,.10);
+  border:1px solid rgba(43,213,118,.22);
+  color:#b9f6d4;
+}
+.pill.bad{
+  background:rgba(255,77,77,.10);
+  border:1px solid rgba(255,77,77,.22);
+  color:#ffd0d0;
+}
+
+/* map mock */
+.map{
+  margin-top:12px;
+  height:64px;
+  border-radius:14px;
+  border:1px solid rgba(255,255,255,.08);
+  background:rgba(0,0,0,.10);
+  position:relative;
+  overflow:hidden;
+}
+.map-line{
+  position:absolute;
+  left:18px;
+  top:18px;
+  width:110px;
+  height:2px;
+  background:rgba(255,255,255,.10);
+}
+.map-line.right{
+  left:auto;
+  right:18px;
+  top:36px;
+  width:90px;
+}
+.pin{
+  position:absolute;
+  left:50%;
+  top:50%;
+  width:10px;height:10px;
+  background:var(--accent);
+  border-radius:50%;
+  transform:translate(-50%,-50%);
+  box-shadow:0 0 0 6px rgba(255,122,0,.12);
+}
+.pin::after{
+  content:"";
+  position:absolute;
+  left:50%;
+  top:10px;
+  width:2px;height:18px;
+  background:rgba(255,122,0,.55);
+  transform:translateX(-50%);
+  border-radius:2px;
+}
+
+/* actions */
+.actions{
+  margin-top:12px;
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+}
+
+.btn{
+  height:46px;
+  border-radius:14px;
+  border:1px solid rgba(255,255,255,.10);
+  background:rgba(255,255,255,.03);
+  color:#fff;
+  font-weight:900;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:10px;
+  cursor:pointer;
+  transition:.2s ease;
+}
+.btn:hover{background:rgba(255,255,255,.05);transform:translateY(-1px)}
+
+.btn.danger{
+  background:rgba(255,77,77,.75);
+  border-color:rgba(255,77,77,.35);
+  color:#130606;
+}
+.btn.danger:hover{filter:brightness(1.05)}
+
+.btn.ghost{
+  background:rgba(255,255,255,.03);
+  color:rgba(255,255,255,.85);
+}
+
+.back{
+  margin-top:2px;
+  text-align:center;
+  color:rgba(255,255,255,.55);
+  text-decoration:none;
+  font-size:12px;
+  display:inline-flex;
+  gap:8px;
+  align-items:center;
+  justify-content:center;
+}
+.back:hover{color:rgba(255,255,255,.75)}
+
+.toast{
+  position:fixed;
+  left:50%;
+  bottom:18px;
+  transform:translateX(-50%);
+  background:rgba(0,0,0,.60);
+  border:1px solid rgba(255,255,255,.10);
+  padding:10px 12px;
+  border-radius:999px;
+  color:#fff;
+  font-size:12px;
+  opacity:0;
+  pointer-events:none;
+  transition:.2s ease;
+}
+.actions{
+  position: relative;
+  z-index: 10;
+}
+
+#btnSair{
+  position: relative;
+  z-index: 9999;
+  touch-action: manipulation;
+}
+
+/* ===== Modo EM ATENDIMENTO ===== */
+
+.pos-num.em-atendimento{
+  font-size: clamp(18px, 4vw, 26px); /* responsivo */
+  font-weight: 700;
+  letter-spacing: .5px;
+
+  white-space: nowrap;     /* não quebra linha */
+  overflow: hidden;
+  text-overflow: ellipsis; /* corta se faltar espaço */
+
+  color: #ffffff; /* opcional — laranja suave */
+}
+
+.pos-sub.em-atendimento{
+  font-size: 14px;
+  color: rgba(255,255,255,.8);
+}
+
+#posicao {
+  color: #fff !important;
+}
+/* ===== Modal final/cancel (cliente) ===== */
+.final-modal{
+  position: fixed;
+  inset: 0;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  z-index: 99999;
+}
+.final-modal.show{ display:flex; }
+
+.final-overlay{
+  position:absolute;
+  inset:0;
+  background: rgba(0,0,0,.75);
+  backdrop-filter: blur(6px);
+}
+
+.final-card{
+  position: relative;
+  z-index: 2;
+  width: min(560px, 92vw);
+  border-radius: 18px;
+  border: 1px solid rgba(255,122,0,.25);
+  background: linear-gradient(180deg, rgba(255,122,0,.12), rgba(0,0,0,.25));
+  box-shadow: 0 30px 90px rgba(0,0,0,.85);
+  padding: 28px 26px;
+  text-align: center;
+  color: #fff;
+  animation: pop .22s ease;
+}
+@keyframes pop{ from{opacity:0; transform:scale(.95)} to{opacity:1; transform:scale(1)} }
+
+.final-title{
+  font-weight: 900;
+  font-size: 28px;
+  margin: 0 0 8px;
+}
+.final-sub{
+  opacity: .85;
+  margin: 0 0 18px;
+  font-size: 14px;
+  line-height: 1.4;
+}
+.final-pill{
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,.12);
+  background: rgba(0,0,0,.18);
+  font-weight: 800;
+  margin: 10px 0 18px;
+}
+.final-actions{
+  display:flex;
+  justify-content:center;
+}
+.final-btn{
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,.14);
+  background: rgba(255,255,255,.06);
+  color: #fff;
+  padding: 12px 16px;
+  font-weight: 900;
+  cursor: pointer;
+  min-width: 200px;
+}
+.final-btn.primary{
+  background: #ff7a00;
+  color: #0b0c0e;
+  border-color: rgba(255,122,0,.55);
+  box-shadow: 0 14px 30px rgba(255,122,0,.18);
+}
+/* =========================================================
+   ✅ LIGHT MODE — Fila Cliente
+   Cole NO FINAL do style_fila_cliente.css
+========================================================= */
+
+:root[data-theme="light"]{
+  --bg:#f5f6f8;
+  --panel: rgba(255,255,255,.92);
+  --panel2: rgba(255,255,255,.85);
+  --border: rgba(0,0,0,.10);
+
+  --text:#121318;
+  --muted: rgba(18,19,24,.62);
+}
+
+/* Fundo (mantém o estilo, mas claro) */
+:root[data-theme="light"] body{
+  background:
+    radial-gradient(1200px 700px at 50% 0%, rgba(255,122,0,.10), transparent 60%),
+    radial-gradient(900px 700px at 80% 30%, rgba(0,0,0,.05), transparent 55%),
+    var(--bg);
+  color: var(--text);
+}
+
+/* Marca */
+:root[data-theme="light"] .brand-white{ color:#121318; }
+
+/* Botões de ícone */
+:root[data-theme="light"] .icon-btn{
+  background: rgba(0,0,0,.03);
+  border-color: rgba(0,0,0,.10);
+  color: #121318;
+}
+
+/* Cards */
+:root[data-theme="light"] .card{
+  box-shadow: 0 14px 34px rgba(0,0,0,.12);
+}
+
+/* Títulos e textos */
+:root[data-theme="light"] .card-title{
+  color: rgba(18,19,24,.92);
+}
+:root[data-theme="light"] .card-title i{
+  background: rgba(255,122,0,.12);
+  border-color: rgba(255,122,0,.25);
+}
+
+:root[data-theme="light"] .pos-sub{
+  color: rgba(18,19,24,.62);
+}
+
+:root[data-theme="light"] .k{
+  color: rgba(18,19,24,.62);
+}
+:root[data-theme="light"] .v{
+  color: rgba(18,19,24,.92);
+}
+:root[data-theme="light"] .v.danger{
+  color: #d73737;
+}
+
+/* Pills */
+:root[data-theme="light"] .pill.ok{
+  background: rgba(43,213,118,.12);
+  border-color: rgba(43,213,118,.25);
+  color: #157a42;
+}
+:root[data-theme="light"] .pill.bad{
+  background: rgba(255,77,77,.12);
+  border-color: rgba(255,77,77,.25);
+  color: #b32626;
+}
+
+/* Mapa fake */
+:root[data-theme="light"] .map{
+  background: rgba(0,0,0,.03);
+  border-color: rgba(0,0,0,.10);
+}
+:root[data-theme="light"] .map-line{
+  background: rgba(0,0,0,.12);
+}
+
+/* Botões ação */
+:root[data-theme="light"] .btn{
+  background: rgba(0,0,0,.03);
+  border-color: rgba(0,0,0,.10);
+  color: rgba(18,19,24,.92);
+}
+:root[data-theme="light"] .btn.ghost{
+  background: rgba(0,0,0,.03);
+  color: rgba(18,19,24,.82);
+}
+:root[data-theme="light"] .btn.danger{
+  background: rgba(255,77,77,.18);
+  border-color: rgba(255,77,77,.28);
+  color: #5a1515;
+}
+
+/* Toast */
+:root[data-theme="light"] .toast{
+  background: rgba(0,0,0,.70);
+}
+
+/* =========================================================
+   PATCH — LIGHT com contraste + posição destacada
+   Cole NO FINAL do style_fila_cliente.css
+========================================================= */
+
+:root[data-theme="light"]{
+  --bg:#f6f7f9;
+
+  /* cards mais “brancos” e com borda real */
+  --panel: rgba(255,255,255,.96);
+  --panel2: rgba(255,255,255,.92);
+  --border: rgba(17,19,24,.12);
+
+  /* textos com mais contraste */
+  --text:#121318;
+  --muted: rgba(18,19,24,.70);
+}
+
+/* fundo menos lavado */
+:root[data-theme="light"] body{
+  background:
+    radial-gradient(1200px 700px at 50% 0%, rgba(255,122,0,.12), transparent 62%),
+    radial-gradient(900px 700px at 80% 30%, rgba(0,0,0,.06), transparent 58%),
+    var(--bg);
+  color: var(--text);
+}
+
+/* título/brand */
+:root[data-theme="light"] .brand-white{ color: #121318; }
+
+/* cards com sombra mais “real” */
+:root[data-theme="light"] .card{
+  box-shadow: 0 12px 30px rgba(0,0,0,.10);
+}
+
+/* cabeçalhos dos cards */
+:root[data-theme="light"] .card-title{
+  color: rgba(18,19,24,.92);
+}
+:root[data-theme="light"] .card-title i{
+  background: rgba(255,122,0,.12);
+  border-color: rgba(255,122,0,.25);
+}
+
+/* textos */
+:root[data-theme="light"] .sub{ color: rgba(18,19,24,.70); }
+:root[data-theme="light"] .k{ color: rgba(18,19,24,.70); }
+:root[data-theme="light"] .v{ color: rgba(18,19,24,.92); }
+
+/* ✅ AQUI está o principal: posição visível e destacada */
+:root[data-theme="light"] .card.highlight{
+  border-color: rgba(255,122,0,.35);
+  background: linear-gradient(180deg, rgba(255,122,0,.10), rgba(255,255,255,.92));
+}
+
+:root[data-theme="light"] .pos-num{
+  color: #121318;           /* ou use var(--accent) se quiser laranja */
+  text-shadow: 0 1px 0 rgba(255,255,255,.65);
+}
+
+/* ✅ SOBREPÕE o #posicao branco com !important */
+:root[data-theme="light"] #posicao{
+  color: #121318 !important;  /* se quiser laranja: var(--accent) */
+}
+
+/* botões de ícone */
+:root[data-theme="light"] .icon-btn{
+  background: rgba(0,0,0,.03);
+  border-color: rgba(0,0,0,.12);
+  color: #121318;
+}
+
+/* mapa */
+:root[data-theme="light"] .map{
+  background: rgba(0,0,0,.03);
+  border-color: rgba(0,0,0,.12);
+}
+:root[data-theme="light"] .map-line{ background: rgba(0,0,0,.14); }
+
+/* botões ações */
+:root[data-theme="light"] .btn{
+  background: rgba(0,0,0,.03);
+  border-color: rgba(0,0,0,.12);
+  color: rgba(18,19,24,.92);
+}
+:root[data-theme="light"] .btn.ghost{
+  color: rgba(18,19,24,.82);
+}
+
+/* pill fora do raio (melhor contraste) */
+:root[data-theme="light"] .pill.bad{
+  background: rgba(255,77,77,.12);
+  border-color: rgba(255,77,77,.25);
+  color: #b32626;
+}
+
