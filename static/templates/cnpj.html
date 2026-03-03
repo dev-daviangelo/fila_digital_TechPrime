@@ -1,0 +1,263 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>ANDA LOGO - Estabelecimento</title>
+  <link rel="stylesheet" href="/static/css/style_LoginCnpj.css">
+</head>
+<body>
+
+  <div class="bg-effects"></div>
+
+  <main class="wrap">
+    <section class="modal" id="modalCard">
+
+      <h1 class="title">
+        <span class="title-orange">ANDA</span><span class="title-white">LOGO</span>
+      </h1>
+
+      <!-- ===== LOGIN ESTABELECIMENTO ===== -->
+      <div class="mode" id="modeBiz">
+        <p class="subtitle">Acesse o painel do seu estabelecimento.</p>
+
+        <div class="inputWrap">
+          <span class="inputIcon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none">
+              <path d="M4 6h16v12H4z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+              <path d="M4 7l8 6 8-6" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+            </svg>
+          </span>
+          <input id="bizEmail" type="email" class="input" placeholder="Email da empresa" autocomplete="email">
+        </div>
+
+        <div class="inputWrap">
+          <span class="inputIcon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none">
+              <path d="M7 11V8a5 5 0 0 1 10 0v3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              <path d="M6 11h12v10H6z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+            </svg>
+          </span>
+
+          <input id="bizPass" type="password" class="input hasEye" placeholder="Senha" autocomplete="current-password">
+
+          <button type="button" class="eyeBtn" id="togglePass" aria-label="Mostrar senha">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none">
+              <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z" stroke="currentColor" stroke-width="2"/>
+              <path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z" stroke="currentColor" stroke-width="2"/>
+            </svg>
+          </button>
+        </div>
+
+        <p class="error" id="bizError"></p>
+
+        <button type="button" class="btn" id="btnBiz">Entrar no painel</button>
+        <div class="bizLinksRow">
+          <button type="button" class="linkSoft linkLeft" id="forgotBtn">Esqueceu a senha?</button>
+          <button type="button" class="linkSoft linkRight" id="signupBtn">Criar conta</button>
+        </div>
+      </div>
+
+      <!-- ===== CADASTRO 2 ETAPAS (ESTABELECIMENTO) ===== -->
+      <div class="mode hidden" id="modeBizSignup">
+
+        <p class="subtitle">Cadastre seu estabelecimento</p>
+
+        <!-- Stepper -->
+        <div class="stepper" aria-hidden="true">
+          <div class="stepperTop">
+            <div class="stepDot" id="stepDot1">1</div>
+            <div class="stepLine" id="stepLine"></div>
+            <div class="stepDot" id="stepDot2">2</div>
+          </div>
+          <div class="stepperText" id="stepperText">Etapa 1 de 2</div>
+        </div>
+
+        <!-- ===== ETAPA 1 ===== -->
+        <div class="signupStep" id="signupStep1">
+
+          <label class="fieldLabel">Nome do estabelecimento</label>
+          <div class="inputWrap">
+            <span class="inputIcon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none">
+                <path d="M4 7l2-3h12l2 3v3a3 3 0 0 1-3 3H7a3 3 0 0 1-3-3V7z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+                <path d="M6 21V13h12v8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              </svg>
+            </span>
+            <input id="signupBizName" type="text" class="input" placeholder="Ex: Barbearia do Caio" maxlength="60" autocomplete="organization">
+          </div>
+
+          <label class="fieldLabel">CNPJ</label>
+          <div class="inputWrap">
+            <span class="inputIcon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none">
+                <path d="M7 7h10v14H7z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+                <path d="M9 3h6v4H9z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+              </svg>
+            </span>
+            <input id="signupBizCnpj" type="text" class="input" placeholder="00.000.000/0000-00" inputmode="numeric" autocomplete="off" maxlength="18">
+          </div>
+
+          <label class="fieldLabel">Categoria do estabelecimento</label>
+          <div class="inputWrap">
+            <span class="inputIcon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none">
+                <path d="M20 7l-8 10L4 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </span>
+            <select id="signupBizCategory" class="input selectInput">
+              <option value="" disabled selected>Selecione</option>
+              <option>Clínica</option>
+              <option>Barbearia</option>
+              <option>Salão</option>
+              <option>Estética</option>
+              <option>Restaurante</option>
+              <option>Açougue</option>
+              <option>Supermercado</option>
+              <option>Outros</option>
+            </select>
+          </div>
+
+          <div class="grid2">
+            <div>
+              <label class="fieldLabel">Cidade</label>
+              <div class="inputWrap">
+                <span class="inputIcon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" width="18" height="18" fill="none">
+                    <path d="M12 21s7-6 7-11a7 7 0 0 0-14 0c0 5 7 11 7 11z" stroke="currentColor" stroke-width="2"/>
+                    <path d="M12 10a2 2 0 1 0 0-4 2 2 0 0 0 0 4z" stroke="currentColor" stroke-width="2"/>
+                  </svg>
+                </span>
+                <input id="signupBizCity" type="text" class="input" placeholder="Ex: São Paulo" autocomplete="address-level2">
+              </div>
+            </div>
+
+            <div>
+              <label class="fieldLabel">Estado (UF)</label>
+              <div class="inputWrap">
+                <span class="inputIcon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" width="18" height="18" fill="none">
+                    <path d="M4 6h16v12H4z" stroke="currentColor" stroke-width="2"/>
+                    <path d="M8 10h8M8 14h5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                  </svg>
+                </span>
+                <select id="signupBizUF" class="input selectInput">
+                  <option value="" selected>UF</option>
+                  <option>AC</option><option>AL</option><option>AP</option><option>AM</option><option>BA</option>
+                  <option>CE</option><option>DF</option><option>ES</option><option>GO</option><option>MA</option>
+                  <option>MT</option><option>MS</option><option>MG</option><option>PA</option><option>PB</option>
+                  <option>PR</option><option>PE</option><option>PI</option><option>RJ</option><option>RN</option>
+                  <option>RS</option><option>RO</option><option>RR</option><option>SC</option><option>SP</option>
+                  <option>SE</option><option>TO</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <label class="fieldLabel">Telefone / WhatsApp</label>
+          <div class="inputWrap">
+            <span class="inputIcon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none">
+                <path d="M6.5 3h3l1.2 5-2 1.2c1.4 2.8 3.6 5 6.4 6.4l1.2-2 5 1.2v3c0 1-1 2-2 2C11 22 2 13 2 5c0-1 1-2 2-2z"
+                      stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+              </svg>
+            </span>
+            <input id="signupBizPhone" type="tel" class="input" placeholder="(00) 00000-0000" inputmode="tel" autocomplete="tel">
+          </div>
+
+          <p class="error" id="signupError"></p>
+
+          <button type="button" class="btn" id="btnSignupContinue">Continuar</button>
+
+          <button type="button" class="linkSoft" id="signupBackToLogin1">Voltar para login</button>
+        </div>
+
+        <!-- ===== ETAPA 2 ===== -->
+        <div class="signupStep hidden" id="signupStep2">
+
+          <label class="fieldLabel">Email de acesso</label>
+          <div class="inputWrap">
+            <span class="inputIcon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none">
+                <path d="M4 6h16v12H4z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+                <path d="M4 7l8 6 8-6" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+              </svg>
+            </span>
+            <input id="signupBizEmail" type="email" class="input" placeholder="seu@email.com" autocomplete="email">
+          </div>
+
+          <label class="fieldLabel">Senha</label>
+          <div class="inputWrap">
+            <span class="inputIcon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none">
+                <path d="M7 11V8a5 5 0 0 1 10 0v3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                <path d="M6 11h12v10H6z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+              </svg>
+            </span>
+
+            <input id="signupBizPass" type="password" class="input hasEye" placeholder="Mínimo 8 caracteres" autocomplete="new-password">
+
+            <button type="button" class="eyeBtn" id="toggleSignupPass" aria-label="Mostrar senha">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none">
+                <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z" stroke="currentColor" stroke-width="2"/>
+                <path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z" stroke="currentColor" stroke-width="2"/>
+              </svg>
+            </button>
+          </div>
+
+          <label class="fieldLabel">Confirmar senha</label>
+          <div class="inputWrap">
+            <span class="inputIcon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none">
+                <path d="M7 11V8a5 5 0 0 1 10 0v3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                <path d="M6 11h12v10H6z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+              </svg>
+            </span>
+            <input id="signupBizPass2" type="password" class="input" placeholder="Confirme sua senha" autocomplete="new-password">
+          </div>
+
+          <p class="error" id="signupError2"></p>
+
+          <button type="button" class="btn" id="btnSignupBiz">Criar estabelecimento</button>
+
+          <button type="button" class="linkSoft" id="goPrevStepBtn">Voltar para etapa anterior</button>
+        </div>
+
+      </div>
+
+      <!-- ===== ESQUECEU SENHA ===== -->
+      <div class="mode hidden" id="modeForgot">
+        <p class="subtitle">Digite seu email para recuperar a senha.</p>
+
+        <div class="inputWrap">
+          <span class="inputIcon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none">
+              <path d="M4 6h16v12H4z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+              <path d="M4 7l8 6 8-6" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+            </svg>
+          </span>
+          <input id="forgotEmail" type="email" class="input" placeholder="Email cadastrado" autocomplete="email">
+        </div>
+
+        <p class="error" id="forgotError"></p>
+
+        <button type="button" class="btn" id="btnForgot">Enviar email de recuperação</button>
+
+        <button type="button" class="linkSoft" id="backLoginBtn">Voltar para o login</button>
+      </div>
+
+    </section>
+  </main>
+
+  <footer class="siteFooter">
+    <span class="footerBrand">
+      <span class="footerOrange">ANDA</span>
+      <span class="footerWhite">LOGO</span>
+    </span>
+    <span class="footerCopy">© 2026</span>
+  </footer>
+
+  <!-- script único -->
+  <script src="/static/js/app_LoginCnpj.js"></script>
+</body>
+</html>
