@@ -985,7 +985,7 @@ body.lock{ overflow:hidden; }
 
 @media (max-height: 720px){
   .modal{
-    padding: 26px 24px 20px;
+  padding: 28px 28px 22px;
   }
 }
 
@@ -1106,8 +1106,8 @@ body #modalCard button#btnClient.btn{
   border: 0 !important;
   border-radius: 14px !important;
 
-  color: #ffffff !important;
-  -webkit-text-fill-color: #ffffff !important; /* iOS */
+  color: #000000 !important;
+  -webkit-text-fill-color: #030202 !important; /* iOS */
   font-size: 16px !important;
   font-weight: 800 !important;
   letter-spacing: .2px !important;
@@ -1131,8 +1131,8 @@ body .overlay .successActions button.successBtn{
   border: 0 !important;
   border-radius: 14px !important;
 
-  color: #ffffff !important;
-  -webkit-text-fill-color: #ffffff !important; /* iOS */
+  color: #080202 !important;
+  -webkit-text-fill-color: #010000 !important; /* iOS */
   font-size: 16px !important;
   font-weight: 800 !important;
 
@@ -1157,4 +1157,84 @@ button, input{
 /* 5) iOS: melhora clique (evita “não clicável”) */
 button{
   touch-action: manipulation !important;
+}
+/* ===== ETAPA 3 - BOTÕES FINAIS ===== */
+
+#signupStep3 .inputWrapCep{
+  position: relative;
+}
+
+#signupStep3 .inputCep{
+  padding-right: 118px !important;
+}
+
+#signupStep3 #btnBuscarCep.cepInlineBtn{
+  appearance: none !important;
+  -webkit-appearance: none !important;
+  -moz-appearance: none !important;
+  position: absolute !important;
+  top: 50% !important;
+  right: 10px !important;
+  transform: translateY(-50%) !important;
+
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+
+  height: 32px !important;
+  min-width: 86px !important;
+  padding: 0 12px !important;
+  margin: 0 !important;
+
+  border-radius: 8px !important;
+  border: 1px solid rgba(255,122,0,.75) !important;
+  background: rgba(255,122,0,.10) !important;
+  color: #ff8a1c !important;
+
+  font-size: 12px !important;
+  font-weight: 800 !important;
+  line-height: 1 !important;
+  text-decoration: none !important;
+  box-shadow: none !important;
+  outline: none !important;
+  cursor: pointer !important;
+}
+
+#signupStep3 #btnBuscarCep.cepInlineBtn:hover{
+  background: rgba(255,122,0,.16) !important;
+}
+
+#signupStep3 #goPrevStepBtn2.btnTextMini,
+#signupStep3 #signupBackToLogin3.btnTextMini{
+  appearance: none !important;
+  -webkit-appearance: none !important;
+  -moz-appearance: none !important;
+
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+
+  width: 100% !important;
+  height: 36px !important;
+  padding: 0 12px !important;
+  margin-top: 8px !important;
+
+  border-radius: 8px !important;
+  border: 1px solid rgba(255,255,255,.14) !important;
+  background: rgba(255,255,255,.04) !important;
+  color: rgba(255,255,255,.86) !important;
+
+  font-size: 12px !important;
+  font-weight: 700 !important;
+  line-height: 1 !important;
+  text-decoration: none !important;
+  box-shadow: none !important;
+  outline: none !important;
+  cursor: pointer !important;
+}
+
+#signupStep3 #goPrevStepBtn2.btnTextMini:hover,
+#signupStep3 #signupBackToLogin3.btnTextMini:hover{
+  background: rgba(255,255,255,.08) !important;
+  color: #fff !important;
 }

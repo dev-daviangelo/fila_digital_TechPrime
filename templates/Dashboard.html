@@ -11,8 +11,11 @@
   <!-- Icons -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
 
+  <!-- Tema base (onde você colou o CSS do toast também) -->
+  <link rel="stylesheet" href="/static/css/style_theme.css">
+
   <!-- CSS externo -->
-  <link rel="stylesheet" href="/static/css/style_dashboard.css">
+  <link rel="stylesheet" href="/static/css/style_dashboard.css?v=5">
 </head>
 
 <body>
@@ -21,7 +24,9 @@
     <!-- SIDEBAR -->
     <aside class="sidebar" id="sidebar">
       <div class="brand">
-        <div class="avatar">A</div>
+        <div class="avatar avatar-logo">
+          <img src="/assets/img/NAV3.png" alt="ANDA LOGO" class="brand-logo">
+        </div>
         <div>
           <b>ANDA LOGO</b>
           <small>Painel do Estabelecimento</small>
@@ -44,18 +49,18 @@
     <main class="content">
 
       <header class="topbar">
-        <button id="menuBtn" class="menu-btn"><i class="bi bi-list"></i></button>
+        <button id="menuBtn" class="menu-btn" aria-label="Abrir menu"><i class="bi bi-list"></i></button>
 
-        <!-- ✅ dinâmico -->
         <div class="estab" id="estabHeader" title="Estabelecimento">
           <span class="dot"></span>
           <span>Estabelecimento:</span>
           <b>&nbsp;<span id="nomeEstabelecimento">—</span></b>
         </div>
 
-        <div class="icons">
-          <i class="bi bi-bell"></i>
-          <i class="bi bi-sun"></i>
+        <div class="top-actions">
+          <button class="icon-btn" type="button" data-theme-toggle title="Tema" aria-label="Alternar tema">
+            <i class="bi bi-sun"></i>
+          </button>
         </div>
       </header>
 
@@ -84,12 +89,17 @@
           </div>
 
           <div class="card">
-            <i class="bi bi-geo-alt"></i>
-            <h2 id="noRaioDash">0</h2>
-            <span>No raio</span>
+            <i class="bi bi-x-circle"></i>
+            <h2 id="canceladosDash">0</h2>
+            <span>Atendimentos cancelados</span>
+          </div>
+
+          <div class="card">
+            <i class="bi bi-check-circle"></i>
+            <h2 id="concluidosDash">0</h2>
+            <span>Atendimentos concluídos</span>
           </div>
         </div>
-        <!-- FIM MÉTRICAS -->
 
         <!-- PRÓXIMO -->
         <div class="box">
@@ -101,9 +111,7 @@
               <span class="pill">Aguardando</span>
             </div>
 
-            <button id="btnChamar" class="btn-primary">
-              <i class="bi bi-play-fill"></i> Chamar
-            </button>
+            <div class="btn-slot" aria-hidden="true"></div>
           </div>
         </div>
 
@@ -118,8 +126,12 @@
     </main>
   </div>
 
-  <!-- JS externo (cache killer) -->
-   <script src="/static/js/theme.js"></script>
+  <!-- Stack dos toasts -->
+  <div class="toast-stack" id="toastStack"></div>
+
+  <!-- ✅ scripts no final -->
+  <script src="/static/js/app_toasts.js?v=1"></script>
+  <script src="/static/js/app_theme.js"></script>
   <script src="/static/js/app_dashboard.js?v=4"></script>
 </body>
 </html>

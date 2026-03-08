@@ -1,5 +1,5 @@
-// /static/js/theme.js
-(function () {
+// /static/js/app_theme.js
+(() => {
   const KEY = "theme"; // "dark" | "light"
 
   function getTheme() {
@@ -8,49 +8,41 @@
   }
 
   function setTheme(theme) {
-    // html
     document.documentElement.setAttribute("data-theme", theme);
 
-    // body classes
+    // body classes (se algum CSS seu depender disso)
     document.body.classList.remove("theme-dark", "theme-light");
     document.body.classList.add(theme === "dark" ? "theme-dark" : "theme-light");
 
+    // ajuda select/dropdown no Chrome
+    document.documentElement.style.colorScheme = theme;
+
     localStorage.setItem(KEY, theme);
 
-    // ícone
-    const btn =
-      document.getElementById("btnTheme") ||
-      document.querySelector("[data-theme-toggle]") ||
-      null;
-
-    if (btn) {
+    // atualiza ícone em TODOS os botões existentes
+    document.querySelectorAll("#btnTheme, #btnTema, [data-theme-toggle]").forEach((btn) => {
       const icon = btn.querySelector("i");
       if (icon) icon.className = theme === "dark" ? "bi bi-moon" : "bi bi-sun";
-    }
+      btn.setAttribute("aria-pressed", theme === "light" ? "true" : "false");
+    });
   }
 
   function toggleTheme() {
     const cur = document.documentElement.getAttribute("data-theme") || getTheme();
-    const next = cur === "dark" ? "light" : "dark";
-    setTheme(next);
+    setTheme(cur === "dark" ? "light" : "dark");
   }
 
   function init() {
-    // garante body existir
     setTheme(getTheme());
 
-    const btn =
-      document.getElementById("btnTheme") ||
-      document.querySelector("[data-theme-toggle]") ||
-      null;
-
-    if (!btn) {
+    const buttons = document.querySelectorAll("#btnTheme, #btnTema, [data-theme-toggle]");
+    if (!buttons.length) {
       console.warn("[theme] botão de tema não encontrado");
       return;
     }
 
-    btn.addEventListener("click", toggleTheme);
-    console.log("[theme] ok, tema atual:", getTheme());
+    buttons.forEach((btn) => btn.addEventListener("click", toggleTheme));
+    console.log("[theme] ok:", getTheme());
   }
 
   if (document.readyState === "loading") {
@@ -60,21 +52,3 @@
   }
 })();
 
-document.addEventListener("DOMContentLoaded", () => {
-  const btn = document.getElementById("btnTheme");
-  if (!btn) return;
-
-  const html = document.documentElement;
-
-  // aplica tema salvo
-  const saved = localStorage.getItem("theme");
-  if (saved) html.setAttribute("data-theme", saved);
-
-  btn.addEventListener("click", () => {
-    const current = html.getAttribute("data-theme");
-    const next = current === "light" ? "dark" : "light";
-
-    html.setAttribute("data-theme", next);
-    localStorage.setItem("theme", next);
-  });
-});

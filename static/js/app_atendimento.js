@@ -1,7 +1,10 @@
-// ================= CONFIG =================
+/* =========================================================
+   app_atendimento.js — COMPLETO (TOASTS só ENTROU/SAIU)
+========================================================= */
+
 const API_BASE = window.location.origin;
 
-// ================= ESTABELECIMENTO (nome dinâmico) =================
+// ================= ESTABELECIMENTO =================
 (function syncNomeEstab() {
   const ja = localStorage.getItem("nomeEstabelecimento");
   if (ja && ja.trim()) return;
@@ -50,11 +53,17 @@ const callModal = document.getElementById("callModal");
 const callNome = document.getElementById("callNome");
 const callPosicao = document.getElementById("callPosicao");
 
-// ✅ Modal de finalizado (overlay grande)
 const finishOverlay = document.getElementById("finishOverlay");
+const finishMsg = document.getElementById("finishMsg");
 const finishSub = document.getElementById("finishSub");
 const finishTip = document.getElementById("finishTip");
 const finishOkBtn = document.getElementById("finishOkBtn");
+
+const confirmModal = document.getElementById("confirmModal");
+const confirmSub = document.getElementById("confirmSub");
+const confirmClient = document.getElementById("confirmClient");
+const confirmSim = document.getElementById("confirmSim");
+const confirmNao = document.getElementById("confirmNao");
 
 const filaSelect = document.getElementById("filaSelect");
 const filaInfo = document.getElementById("filaInfo");
@@ -83,38 +92,104 @@ function setButtons({ canChamar=false, canFinalizar=false, canCancelar=false, ca
   if (btnPular) btnPular.disabled = !canPular;
 }
 
-// ✅ Modal pequeno ("Chamando cliente")
-function showCallModalCliente({ nome="—", posicao=1, titulo="Chamando cliente" }) {
-  if (!callModal || !callNome || !callPosicao) return;
-
-  callNome.textContent = nome;
-  callPosicao.textContent = `${titulo} • Posição #${pad3(posicao || 1)}`;
-
-  callModal.classList.add("show");
-  setTimeout(() => callModal.classList.remove("show"), 1800);
+let opRunning = false;
+function setOpRunning(v) {
+  opRunning = !!v;
+  if (v) {
+    if (btnChamar) btnChamar.disabled = true;
+    if (btnFinalizar) btnFinalizar.disabled = true;
+    if (btnCancelar) btnCancelar.disabled = true;
+    if (btnPular) btnPular.disabled = true;
+  }
 }
 
-// ✅ Modal grande (finishOverlay)
-function openFinishOverlay({ nome="Cliente" } = {}) {
+// Modal pequeno
+function showCallModalCliente({ nome="—", posicao=1, titulo="Chamando cliente", ms=1800 }) {
+  return new Promise((resolve) => {
+    if (!callModal || !callNome || !callPosicao) return resolve();
+
+    callNome.textContent = nome;
+    callPosicao.textContent = `${titulo} • Posição #${pad3(posicao || 1)}`;
+    callModal.classList.add("show");
+
+    setTimeout(() => {
+      callModal.classList.remove("show");
+      resolve();
+    }, ms);
+  });
+}
+
+// Overlay grande
+function openFinishOverlay({ mode="finalizado", nome="Cliente" } = {}) {
   if (!finishOverlay) return;
 
-  if (finishSub) finishSub.textContent = `${nome} atendido com sucesso.`;
-  if (finishTip) finishTip.textContent = "Você pode chamar o próximo cliente.";
+  if (mode === "cancelado") {
+    if (finishMsg) finishMsg.textContent = "Atendimento cancelado!";
+    if (finishSub) finishSub.textContent = `${nome} não compareceu e foi removido da fila.`;
+    if (finishTip) finishTip.textContent = "Você pode chamar o próximo cliente.";
+  } else {
+    if (finishMsg) finishMsg.textContent = "Atendimento finalizado!";
+    if (finishSub) finishSub.textContent = `${nome} atendido com sucesso.`;
+    if (finishTip) finishTip.textContent = "Você pode chamar o próximo cliente.";
+  }
 
   finishOverlay.classList.add("show");
   finishOverlay.setAttribute("aria-hidden", "false");
+  document.body.classList.add("lock");
 }
 
 function closeFinishOverlay() {
   if (!finishOverlay) return;
   finishOverlay.classList.remove("show");
   finishOverlay.setAttribute("aria-hidden", "true");
+  document.body.classList.remove("lock");
 }
 
 finishOkBtn?.addEventListener("click", closeFinishOverlay);
 finishOverlay?.addEventListener("click", (e) => {
   if (e.target === finishOverlay) closeFinishOverlay();
 });
+
+// Modal compareceu?
+function askCompareceu({ nome="Cliente", posicao=1 } = {}) {
+  return new Promise((resolve) => {
+    if (!confirmModal) return resolve(true);
+
+    if (confirmSub) confirmSub.textContent = "O cliente chegou ao estabelecimento?";
+    if (confirmClient) confirmClient.textContent = `${nome} • Posição #${pad3(posicao || 1)}`;
+
+    confirmModal.classList.add("show");
+    confirmModal.setAttribute("aria-hidden", "false");
+    document.body.classList.add("lock");
+
+    const overlay = confirmModal.querySelector(".confirm-overlay");
+
+    const cleanup = (val) => {
+      confirmModal.classList.remove("show");
+      confirmModal.setAttribute("aria-hidden", "true");
+      document.body.classList.remove("lock");
+
+      confirmSim?.removeEventListener("click", onSim);
+      confirmNao?.removeEventListener("click", onNao);
+      overlay?.removeEventListener("click", onOverlay);
+      window.removeEventListener("keydown", onKey);
+
+      resolve(val);
+    };
+
+    const onSim = () => cleanup(true);
+    const onNao = () => cleanup(false);
+    const onOverlay = () => cleanup(false);
+    const onKey = (ev) => { if (ev.key === "Escape") cleanup(false); };
+
+    confirmSim?.addEventListener("click", onSim);
+    confirmNao?.addEventListener("click", onNao);
+    overlay?.addEventListener("click", onOverlay);
+    window.addEventListener("keydown", onKey);
+
+    setTimeout(() => confirmSim?.focus?.(), 0);
+  });
+}
 
 // ================= FETCH =================
 async function getJSON(path) {
@@ -149,13 +224,48 @@ if (!estabId) {
 const FILA_SELECIONADA_KEY = "filaSelecionadaId";
 let filaIdAtual = Number(localStorage.getItem(FILA_SELECIONADA_KEY) || 0);
 
-// caches para modal
-let atualCache = null; // { fila_cliente_id, nome }
-let proxCache = null;  // { fila_cliente_id, nome, posicao }
+let atualCache = null;
+let proxCache = null;
+
+// ================= CONTROLE ANTI-RACE =================
+let pendingResult = null;
+let pendingUntil = 0;
+
+function setPending(mode) {
+  pendingResult = mode;
+  pendingUntil = Date.now() + 2500;
+}
+function clearPending() {
+  pendingResult = null;
+  pendingUntil = 0;
+}
+function canAcceptWsMode(mode) {
+  if (!pendingResult) return true;
+  if (Date.now() > pendingUntil) {
+    clearPending();
+    return true;
+  }
+  return mode === pendingResult;
+}
+
+// ================= TOASTS: SOMENTE ENTROU/SAIU =================
+function toastFromEvent(msg){
+  const a = String(msg.action || "").toUpperCase();
+  const p = msg.payload || {};
+  const nome = (p.nome || p.cliente_nome || "Cliente");
+  const filaNome = (p.fila_nome || p.filaNome || "Fila");
+
+  if (a === "CLIENTE_ENTROU"){
+    window.showToastTop?.("success", `<b>${nome}</b> entrou na fila: <b>${filaNome}</b>.`);
+  } else if (a === "CLIENTE_SAIU"){
+    window.showToastTop?.("danger", `<b>${nome}</b> saiu da fila: <b>${filaNome}</b>.`);
+  }
+}
 
 // ================= WEBSOCKET =================
 let ws = null;
 let wsRetryTimer = null;
+let wsPingTimer = null;
 
 function wsUrlForFila(filaId) {
   const proto = (location.protocol === "https:") ? "wss" : "ws";
@@ -166,6 +276,8 @@ function stopWS() {
   try { ws?.close(); } catch {}
   ws = null;
   clearTimeout(wsRetryTimer);
+  clearInterval(wsPingTimer);
+  wsPingTimer = null;
 }
 
 function startWS(filaId) {
@@ -174,23 +286,61 @@ function startWS(filaId) {
 
   ws = new WebSocket(wsUrlForFila(filaId));
 
+  ws.onopen = () => {
+    clearInterval(wsPingTimer);
+    wsPingTimer = setInterval(() => {
+      try {
+        if (ws?.readyState === WebSocket.OPEN) ws.send("ping");
+      } catch {}
+    }, 25000);
+  };
+
   ws.onmessage = async (e) => {
     try {
       const msg = JSON.parse(e.data);
       if (msg?.type !== "fila_update") return;
 
+      // ✅ só entra/sai do cliente
+      toastFromEvent(msg);
+
       const action = (msg.action || "").toUpperCase();
       const p = msg.payload || {};
+      const nome = p.nome || atualCache?.nome || "Cliente";
 
+      // cliente saiu sozinho: só atualiza
+      if (action === "CLIENTE_SAIU") {
+        await refreshAtendimento();
+        return;
+      }
+
+      // finalizado (SEM toast — só modal)
       if (action === "ATENDIMENTO_FINALIZADO" || action === "FINALIZOU") {
-        openFinishOverlay({ nome: p.nome || atualCache?.nome || "Cliente" });
+        if (canAcceptWsMode("finalizado")) {
+          openFinishOverlay({ mode: "finalizado", nome });
+          clearPending();
+        }
+        await refreshAtendimento();
+        return;
+      }
+
+      // cancelado (SEM toast — só modal)
+      if (action === "CANCELOU" || action === "ATENDIMENTO_CANCELADO") {
+        if (canAcceptWsMode("cancelado")) {
+          openFinishOverlay({ mode: "cancelado", nome });
+          clearPending();
+        }
+        await refreshAtendimento();
+        return;
       }
 
       await refreshAtendimento();
-    } catch {}
+    } catch {
+      // ignore
+    }
   };
 
   ws.onclose = () => {
+    clearInterval(wsPingTimer);
     clearTimeout(wsRetryTimer);
     wsRetryTimer = setTimeout(() => startWS(filaId), 2500);
   };
@@ -198,62 +348,68 @@ function startWS(filaId) {
 
 // ================= API: STATUS ATENDIMENTO =================
 async function refreshAtendimento() {
-  if (!filaIdAtual) {
-    if (totalFilaEl) totalFilaEl.textContent = "0";
-    if (atendendoAgoraEl) atendendoAgoraEl.textContent = "Selecione uma fila";
-    if (proxNomeEl) proxNomeEl.textContent = "—";
-    if (proxPosEl) proxPosEl.textContent = "—";
-    if (proxBadgeEl) proxBadgeEl.textContent = "—";
-    if (filaInfo) filaInfo.textContent = "";
-    atualCache = null;
-    proxCache = null;
-    setButtons({});
-    return;
+  try {
+    if (!filaIdAtual) {
+      if (totalFilaEl) totalFilaEl.textContent = "0";
+      if (atendendoAgoraEl) atendendoAgoraEl.textContent = "Selecione uma fila";
+      if (proxNomeEl) proxNomeEl.textContent = "—";
+      if (proxPosEl) proxPosEl.textContent = "—";
+      if (proxBadgeEl) proxBadgeEl.textContent = "—";
+      if (filaInfo) filaInfo.textContent = "";
+      atualCache = null;
+      proxCache = null;
+      setButtons({});
+      return;
+    }
+
+    const data = await getJSON(`/api/filas/${filaIdAtual}/atendimento/status`);
+
+    if (filaInfo) {
+      const statusTxt = (data.fila_status || "").toUpperCase() === "ABERTA" ? "Ativa" : "Inativa";
+      filaInfo.textContent = `${statusTxt} • ID: ${data.fila_id}`;
+    }
+
+    if (totalFilaEl) totalFilaEl.textContent = String(data.aguardando_total ?? 0);
+    if (tempoMedioEl) tempoMedioEl.textContent = String(data.tempo_medio_min ?? 15);
+
+    const atual = data.atual || null;
+    atualCache = atual;
+
+    if (atual) {
+      if (atendendoAgoraEl) atendendoAgoraEl.textContent = atual.nome || "—";
+    } else {
+      if (atendendoAgoraEl) atendendoAgoraEl.textContent = "Nenhum cliente sendo atendido";
+    }
+
+    const prox = data.proximo || null;
+    proxCache = prox;
+
+    if (prox) {
+      if (proxNomeEl) proxNomeEl.textContent = prox.nome || "—";
+      if (proxPosEl) proxPosEl.textContent = `Posição #${pad3(prox.posicao || 1)}`;
+      if (proxBadgeEl) proxBadgeEl.textContent = "Aguardando";
+    } else {
+      if (proxNomeEl) proxNomeEl.textContent = "—";
+      if (proxPosEl) proxPosEl.textContent = "Sem próximo";
+      if (proxBadgeEl) proxBadgeEl.textContent = "—";
+    }
+
+    const temAtual = !!atual;
+    const temProx = !!prox;
+
+    setButtons({
+      canChamar: !temAtual && temProx,
+      canFinalizar: temAtual,
+      canCancelar: temAtual,
+      canPular: !temAtual && (data.aguardando_total ?? 0) > 1,
+    });
+
+    if (btnChamar) btnChamar.title = temAtual ? "Finalize/cancele antes de chamar outro" : "";
+  } catch (e) {
+    console.log("refreshAtendimento erro:", e);
+  } finally {
+    setOpRunning(false);
   }
-
-  const data = await getJSON(`/api/filas/${filaIdAtual}/atendimento/status`);
-
-  if (filaInfo) {
-    const statusTxt = (data.fila_status || "").toUpperCase() === "ABERTA" ? "Ativa" : "Inativa";
-    filaInfo.textContent = `${statusTxt} • ID: ${data.fila_id}`;
-  }
-
-  if (totalFilaEl) totalFilaEl.textContent = String(data.aguardando_total ?? 0);
-  if (tempoMedioEl) tempoMedioEl.textContent = String(data.tempo_medio_min ?? 15);
-
-  const atual = data.atual || null;
-  atualCache = atual;
-
-  if (atual) {
-    if (atendendoAgoraEl) atendendoAgoraEl.textContent = atual.nome || "—";
-  } else {
-    if (atendendoAgoraEl) atendendoAgoraEl.textContent = "Nenhum cliente sendo atendido";
-  }
-
-  const prox = data.proximo || null;
-  proxCache = prox;
-
-  if (prox) {
-    if (proxNomeEl) proxNomeEl.textContent = prox.nome || "—";
-    if (proxPosEl) proxPosEl.textContent = `Posição #${pad3(prox.posicao || 1)}`;
-    if (proxBadgeEl) proxBadgeEl.textContent = "Aguardando";
-  } else {
-    if (proxNomeEl) proxNomeEl.textContent = "—";
-    if (proxPosEl) proxPosEl.textContent = "Sem próximo";
-    if (proxBadgeEl) proxBadgeEl.textContent = "—";
-  }
-
-  const temAtual = !!atual;
-  const temProx = !!prox;
-
-  setButtons({
-    canChamar: !temAtual && temProx,
-    canFinalizar: temAtual,
-    canCancelar: temAtual,
-    canPular: !temAtual && (data.aguardando_total ?? 0) > 1,
-  });
-
-  if (btnChamar) btnChamar.title = temAtual ? "Finalize/cancele antes de chamar outro" : "";
 }
 
 // ================= CARREGAR FILAS =================
@@ -264,10 +420,14 @@ async function carregarFilas() {
 
   filaSelect.innerHTML = "";
 
-  if (!Array.isArray(filas) || !filas.length) {
+  const filasAtivas = Array.isArray(filas)
+    ? filas.filter(f => (f.status || "").toUpperCase() === "ABERTA")
+    : [];
+
+  if (!filasAtivas.length) {
     const opt = document.createElement("option");
     opt.value = "";
-    opt.textContent = "Nenhuma fila criada";
+    opt.textContent = "Nenhuma fila ativa";
     filaSelect.appendChild(opt);
 
     filaIdAtual = 0;
@@ -277,26 +437,24 @@ async function carregarFilas() {
     return;
   }
 
-  filas.sort((a, b) => {
-    const aa = (a.status === "ABERTA") ? 0 : 1;
-    const bb = (b.status === "ABERTA") ? 0 : 1;
-    if (aa !== bb) return aa - bb;
+  filasAtivas.sort((a, b) => {
     return (b.idFila || b.id || 0) - (a.idFila || a.id || 0);
   });
 
-  for (const f of filas) {
+  for (const f of filasAtivas) {
     const id = Number(f.idFila || f.id || 0);
     const nome = (f.nome || `Fila #${id}`).trim();
-    const ativa = (f.status || "").toUpperCase() === "ABERTA";
 
     const opt = document.createElement("option");
     opt.value = String(id);
-    opt.textContent = ativa ? nome : `${nome} (inativa)`;
+    opt.textContent = nome;
     filaSelect.appendChild(opt);
   }
 
-  const existe = filas.some(f => Number(f.idFila || f.id) === Number(filaIdAtual));
-  filaIdAtual = existe ? Number(filaIdAtual) : Number(filas[0].idFila || filas[0].id);
+  const existe = filasAtivas.some(f => Number(f.idFila || f.id) === Number(filaIdAtual));
+  filaIdAtual = existe
+    ? Number(filaIdAtual)
+    : Number(filasAtivas[0].idFila || filasAtivas[0].id);
 
   filaSelect.value = String(filaIdAtual);
   localStorage.setItem(FILA_SELECIONADA_KEY, String(filaIdAtual));
@@ -306,66 +464,114 @@ async function carregarFilas() {
 }
 
 filaSelect?.addEventListener("change", async () => {
-  filaIdAtual = Number(filaSelect.value || 0);
-  localStorage.setItem(FILA_SELECIONADA_KEY, String(filaIdAtual || ""));
-  startWS(filaIdAtual);
+  const novoId = Number(filaSelect.value || 0);
+  filaIdAtual = novoId;
+
+  if (filaIdAtual) {
+    localStorage.setItem(FILA_SELECIONADA_KEY, String(filaIdAtual));
+    startWS(filaIdAtual);
+  } else {
+    localStorage.removeItem(FILA_SELECIONADA_KEY);
+    stopWS();
+  }
+
   await refreshAtendimento();
 });
 
 // ================= AÇÕES =================
 btnChamar?.addEventListener("click", async () => {
-  if (!filaIdAtual) return;
+  if (!filaIdAtual || opRunning) return;
+
   try {
+    setOpRunning(true);
+
     const r = await postJSON(`/api/filas/${filaIdAtual}/atendimento/chamar`);
-    showCallModalCliente({
-      nome: r?.cliente?.nome || proxCache?.nome || "Cliente",
-      posicao: r?.cliente?.posicao || 1,
-      titulo: "Chamando cliente"
-    });
+
+    const nome = r?.cliente?.nome || proxCache?.nome || "Cliente";
+    const pos = r?.cliente?.posicao || 1;
+
+    await showCallModalCliente({ nome, posicao: pos, titulo: "Chamando cliente", ms: 1800 });
+
+    await refreshAtendimento();
+
+    const compareceu = await askCompareceu({ nome, posicao: pos });
+
+    if (!compareceu) {
+      setPending("cancelado");
+      await postJSON(`/api/filas/${filaIdAtual}/atendimento/cancelar`);
+      openFinishOverlay({ mode: "cancelado", nome });
+      await refreshAtendimento();
+      return;
+    }
+
     await refreshAtendimento();
   } catch (e) {
     alert(e.message || "Erro ao chamar");
+  } finally {
+    setOpRunning(false);
   }
 });
 
 btnFinalizar?.addEventListener("click", async () => {
-  if (!filaIdAtual) return;
+  if (!filaIdAtual || opRunning) return;
+
   try {
+    setOpRunning(true);
+
     const nome = atualCache?.nome || "Cliente";
+    setPending("finalizado");
+
     await postJSON(`/api/filas/${filaIdAtual}/atendimento/finalizar`);
-    openFinishOverlay({ nome });
+    openFinishOverlay({ mode: "finalizado", nome });
+
     await refreshAtendimento();
   } catch (e) {
+    clearPending();
     alert(e.message || "Erro ao finalizar");
+  } finally {
+    setOpRunning(false);
   }
 });
 
 btnCancelar?.addEventListener("click", async () => {
-  if (!filaIdAtual) return;
+  if (!filaIdAtual || opRunning) return;
+
   try {
+    setOpRunning(true);
+
+    const nome = atualCache?.nome || "Cliente";
+    setPending("cancelado");
+
     await postJSON(`/api/filas/${filaIdAtual}/atendimento/cancelar`);
+    openFinishOverlay({ mode: "cancelado", nome });
+
     await refreshAtendimento();
   } catch (e) {
+    clearPending();
     alert(e.message || "Erro ao cancelar");
+  } finally {
+    setOpRunning(false);
   }
 });
 
 btnPular?.addEventListener("click", async () => {
-  if (!filaIdAtual) return;
+  if (!filaIdAtual || opRunning) return;
+
   try {
+    setOpRunning(true);
     await postJSON(`/api/filas/${filaIdAtual}/atendimento/pular`);
     await refreshAtendimento();
   } catch (e) {
     alert(e.message || "Erro ao pular");
+  } finally {
+    setOpRunning(false);
   }
 });
 
 // ================= INIT =================
 (async () => {
-  // ✅ renderiza de cara com o que tem no storage
   renderEstabNome(estabNomeLS);
 
-  // ✅ tenta pegar do banco e atualizar (opcional)
   try {
     const est = await getJSON(`/api/estabelecimentos/${estabId}`);
     if (est?.nome) {
@@ -376,4 +582,13 @@ btnPular?.addEventListener("click", async () => {
   } catch {}
 
   await carregarFilas();
+
+  setInterval(() => {
+    if (!filaIdAtual) return;
+    refreshAtendimento().catch(()=>{});
+  }, 4000);
+
+  setInterval(() => {
+    carregarFilas().catch(()=>{});
+  }, 10000);
 })();

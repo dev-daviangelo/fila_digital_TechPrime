@@ -8,10 +8,10 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+  
 
-  <link rel="stylesheet" href="/static/css/style_fila_cliente.css" />
+  <link rel="stylesheet" href="/static/css/style_fila_cliente.css?v=20260301_01" />
 </head>
 
 <body>
@@ -24,7 +24,22 @@
       </div>
       <div class="sub">Você está na fila.</div>
 
-      <button class="icon-btn" id="btnTema" title="Tema" type="button">
+      <!-- ✅ nome aparece em PC e celular -->
+      <div class="sub" style="opacity:.9;margin-top:6px">
+        Cliente: <b id="clienteNomeHeader">—</b>
+      </div>
+      
+      <div id="modalAviso" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);align-items:center;justify-content:center;z-index:9999;">
+  <div style="background:#111;padding:30px;border-radius:12px;border:2px solid #ff7a00;max-width:400px;text-align:center;">
+    <h3 id="modalTitulo"></h3>
+    <p id="modalMensagem"></p>
+    <button onclick="fecharModal()" style="margin-top:15px;padding:10px 20px;background:#ff7a00;border:none;border-radius:8px;color:white;font-weight:bold;">
+      OK
+    </button>
+  </div>
+</div>
+
+      <button class="icon-btn" id="btnTema" data-theme-toggle title="Tema" type="button">
         <i class="bi bi-sun"></i>
       </button>
     </header>
@@ -122,25 +137,26 @@
       </div>
     </section>
 
-<section class="actions">
-  <button class="btn danger" id="btnSair" type="button">
-    <i class="bi bi-box-arrow-right"></i>
-    Sair da fila
-  </button>
+    <section class="actions">
+      <button class="btn danger" id="btnSair" type="button">
+        <i class="bi bi-box-arrow-right"></i>
+        Sair da fila
+      </button>
 
-  <button class="btn ghost" id="btnAtualizar" type="button">
-    <i class="bi bi-arrow-clockwise"></i>
-    Atualizar dados
-  </button>
-</section>
-
+      <button class="btn ghost" id="btnAtualizar" type="button">
+        <i class="bi bi-arrow-clockwise"></i>
+        Atualizar dados
+      </button>
+    </section>
 
     <div class="toast" id="toast">Atualizado!</div>
   </main>
 
-  <!-- ✅ cache-bust pra celular pegar JS novo -->
-  <script src="/static/js/app_fila_cliente.js?v=999"></script>
+  <!-- ✅ modal final será montado 100% via JS -->
+  <div class="final-modal" id="finalModal" style="display:none;"></div>
 
+  <!-- ✅ cache-bust -->
+<script src="/static/js/app_theme.js"></script>
+<script src="/static/js/app_fila_cliente.js?v=20260227_99"></script>
 </body>
 </html>
-

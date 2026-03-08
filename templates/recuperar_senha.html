@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>ANDA LOGO - Recuperar Senha</title>
+
+  <!-- CSS da página -->
+  <link rel="stylesheet" href="/static/css/recuperar_senha.css" />
+</head>
+
+<body>
+  <div class="bg-effects"></div>
+
+  <main class="wrap">
+    <section class="card">
+
+      <h1 class="brand">
+        <span class="brand-orange">ANDA</span><span class="brand-white">LOGO</span>
+      </h1>
+
+      <!-- ETAPA 1 -->
+      <div class="step" id="stepSend">
+        <p class="subtitle">Digite seu e-mail para receber o código de recuperação.</p>
+
+        <label class="field">
+          <span class="label">E-mail</span>
+          <div class="inputWrap">
+            <span class="icon" aria-hidden="true">✉️</span>
+            <input id="email" type="email" placeholder="ex: seuemail@gmail.com" autocomplete="email" />
+          </div>
+        </label>
+
+        <p class="error" id="sendError"></p>
+
+        <button class="btn" id="btnSend" type="button">Enviar código</button>
+
+        <div class="links">
+          <button class="link" id="goLogin" type="button">Voltar para o login</button>
+          <button class="link" id="goStepReset" type="button">Já tenho o código</button>
+        </div>
+      </div>
+
+      <!-- ETAPA 2 -->
+      <div class="step hidden" id="stepReset">
+        <p class="subtitle">Digite o código e defina sua nova senha.</p>
+
+        <label class="field">
+          <span class="label">E-mail</span>
+          <div class="inputWrap">
+            <span class="icon" aria-hidden="true">✉️</span>
+            <input id="email2" type="email" placeholder="Email cadastrado" autocomplete="email" />
+          </div>
+        </label>
+
+        <div class="grid2">
+          <label class="field">
+            <span class="label">Código</span>
+            <div class="inputWrap">
+              <span class="icon" aria-hidden="true">🔐</span>
+              <input id="code" type="text" placeholder="6 dígitos" inputmode="numeric" maxlength="6" />
+            </div>
+          </label>
+
+          <label class="field">
+            <span class="label">Nova senha</span>
+            <div class="inputWrap">
+              <span class="icon" aria-hidden="true">🔒</span>
+              <input id="newPass" type="password" placeholder="mín. 8 caracteres" autocomplete="new-password" />
+              <button class="toggle" id="toggle1" type="button" aria-label="Mostrar/ocultar senha">👁️</button>
+            </div>
+          </label>
+        </div>
+
+        <label class="field">
+          <span class="label">Confirmar nova senha</span>
+          <div class="inputWrap">
+            <span class="icon" aria-hidden="true">🔒</span>
+            <input id="newPass2" type="password" placeholder="Digite novamente" autocomplete="new-password" />
+            <button class="toggle" id="toggle2" type="button" aria-label="Mostrar/ocultar senha">👁️</button>
+          </div>
+        </label>
+
+        <p class="error" id="resetError"></p>
+
+        <button class="btn" id="btnReset" type="button">Alterar senha</button>
+
+        <div class="links">
+          <button class="link" id="resend" type="button">Reenviar código</button>
+          <button class="link" id="backSend" type="button">Voltar</button>
+        </div>
+      </div>
+
+    </section>
+  </main>
+
+  <footer class="footer">
+    <span><span class="brand-orange">ANDA</span><span class="brand-white">LOGO</span> · © 2026</span>
+  </footer>
+
+  <script src="/static/js/recuperar_senha.js"></script>
+</body>
+</html>

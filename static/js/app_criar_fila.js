@@ -1,8 +1,17 @@
+/* =========================================================
+   app_criar_fila.js — COMPLETO (SEM ENDEREÇO)
+   ✅ Tooltip flutuante no slider (valor acompanha bolinha)
+   ✅ Fill do slider
+   ✅ Criar fila sem endereço
+   ✅ Erros do FastAPI (422/400) aparecem direito
+========================================================= */
+
+console.log("[CRIAR FILA] app_criar_fila.js carregou");
+
 // ===============================
 // ESTABELECIMENTO (nome dinâmico)
 // ===============================
 function obterNomeEstabelecimento() {
-  // tenta em várias chaves (pra funcionar mesmo antes de eu ver teu login)
   const direct =
     localStorage.getItem("nomeEstabelecimento") ||
     localStorage.getItem("estabelecimento_nome") ||
@@ -11,7 +20,6 @@ function obterNomeEstabelecimento() {
 
   if (direct && direct.trim()) return direct.trim();
 
-  // tenta objeto salvo em JSON (se existir)
   const possibleJsonKeys = ["estabelecimento", "biz", "usuarioEstab"];
   for (const k of possibleJsonKeys) {
     const raw = localStorage.getItem(k);
@@ -22,7 +30,6 @@ function obterNomeEstabelecimento() {
       if (name && String(name).trim()) return String(name).trim();
     } catch {}
   }
-
   return null;
 }
 
@@ -37,17 +44,19 @@ function preencherNomeNoTopo() {
 
 document.addEventListener("DOMContentLoaded", preencherNomeNoTopo);
 
-// Sidebar mobile (apenas para esta página)
+// ===============================
+// Sidebar mobile
+// ===============================
 const sidebar = document.getElementById("sidebar");
 const backdrop = document.getElementById("backdrop");
 const menuBtn = document.getElementById("menuBtn");
 
-function openSidebar(){
+function openSidebar() {
   if (!sidebar || !backdrop) return;
   sidebar.classList.add("open");
   backdrop.classList.add("show");
 }
-function closeSidebar(){
+function closeSidebar() {
   if (!sidebar || !backdrop) return;
   sidebar.classList.remove("open");
   backdrop.classList.remove("show");
@@ -56,29 +65,49 @@ function closeSidebar(){
 if (menuBtn) menuBtn.addEventListener("click", openSidebar);
 if (backdrop) backdrop.addEventListener("click", closeSidebar);
 
-// Range (raio em metros)
+// ===============================
+// Range (raio) — tooltip + fill
+// ===============================
 const rangeMeters = document.getElementById("rangeMeters");
 const rangeValue = document.getElementById("rangeValue");
 
-function setRangeLabel(v){
-  if (!rangeValue) return;
-  rangeValue.textContent = `${v}m`;
+function atualizarRangeUI() {
+  if (!rangeMeters) return;
+
+  const min = Number(rangeMeters.min || 0);
+  const max = Number(rangeMeters.max || 100);
+  const val = Number(rangeMeters.value || 0);
+
+  const percent = ((val - min) * 100) / (max - min || 1);
+
+  // texto
+  if (rangeValue) {
+    rangeValue.textContent = `${val}m`;
+
+rangeValue.style.left = `${percent}%`;
+rangeValue.textContent = `${val}m`;
+
+    // ✅ evita cortar nas pontas
+    rangeValue.classList.toggle("is-min", percent <= 2);
+    rangeValue.classList.toggle("is-max", percent >= 98);
+  }
+
+  // fill do slider
+const trackRest = "rgba(255,255,255,.14)"; // casa com o CSS do track
+  rangeMeters.style.background =
+    `linear-gradient(90deg, var(--accent) 0%, var(--accent) ${percent}%, ${trackRest} ${percent}%, ${trackRest} 100%)`;
 }
 
-if (rangeMeters){
-  setRangeLabel(rangeMeters.value);
-  rangeMeters.addEventListener("input", (e) => {
-    setRangeLabel(e.target.value);
-  });
+if (rangeMeters) {
+  atualizarRangeUI();
+  rangeMeters.addEventListener("input", atualizarRangeUI);
+  rangeMeters.addEventListener("change", atualizarRangeUI);
 }
 
 // ===============================
 // CRIAR FILA
 // ===============================
-
-// inputs
 const nomeFila = document.getElementById("nomeFila");
-const enderecoFila = document.getElementById("enderecoFila");
 const tempoMedio = document.getElementById("tempoMedio");
 const capacidade = document.getElementById("capacidade");
 const toggleAtiva = document.getElementById("toggleAtiva");
@@ -87,34 +116,25 @@ const horario = document.getElementById("horario");
 const observacoes = document.getElementById("observacoes");
 
 const btnSalvar = document.getElementById("btnSalvarFila");
-const listaFilas = document.getElementById("listaFilas");
 
-const STORAGE_KEY = "filasCriadas";
-
-// ✅ API: mesma origem (funciona em localhost e ngrok)
 const API_BASE = window.location.origin;
 
 // ===============================
-// HELPERS localStorage
+// Erro legível
 // ===============================
-function obterFilas(){
+function extrairMensagemErro(err) {
+  if (!err) return "Erro desconhecido";
+  if (typeof err === "string") return err;
+  if (err instanceof Error) return err.message || "Erro";
   try {
-    return JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
+    return JSON.stringify(err);
   } catch {
-    return [];
+    return String(err);
   }
 }
 
-function salvarFilas(filas){
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(filas));
-}
-
-function gerarID(){
-  return "fila_" + Math.random().toString(36).slice(2,8).toUpperCase();
-}
-
 // ===============================
-// FETCH helper
+// FETCH helper (mostra erro do FastAPI)
 // ===============================
 async function postJSON(path, data) {
   const res = await fetch(API_BASE + path, {
@@ -123,60 +143,30 @@ async function postJSON(path, data) {
     body: JSON.stringify(data),
   });
 
-  const payload = await res.json().catch(() => null);
+  const payloadText = await res.text();
+  let payload = null;
+  try { payload = payloadText ? JSON.parse(payloadText) : null; } catch {}
 
   if (!res.ok) {
-    throw new Error(payload?.detail || `Erro HTTP ${res.status}`);
+    // FastAPI 422 pode vir como {detail: [...]}
+    let msg = payload?.detail || payload?.message || `Erro HTTP ${res.status}`;
+    if (Array.isArray(msg)) {
+      // pega a primeira mensagem do pydantic
+      const first = msg[0];
+      msg = first?.msg || first?.message || "Erro de validação (422)";
+    }
+    throw new Error(msg);
   }
 
   return payload;
 }
 
 // ===============================
-// render lado direito (filas existentes)
+// SALVAR FILA (NO BANCO) — SEM ENDEREÇO
 // ===============================
-function renderFilas(){
-  if (!listaFilas) return;
-
-  const filas = obterFilas();
-  listaFilas.innerHTML = "";
-
-  if (!filas.length){
-    listaFilas.innerHTML = `<p style="opacity:.5;font-size:12px">Nenhuma fila criada ainda</p>`;
-    return;
-  }
-
-  filas.forEach(fila => {
-    const item = document.createElement("div");
-    item.className = "queue-item";
-
-    const statusTxt = fila.status || (fila.ativa ? "ABERTA" : "FECHADA");
-    const idBanco = fila.idFila ? `ID Banco: ${fila.idFila}` : "";
-    const idLocal = fila.id ? `ID Local: ${fila.id}` : "";
-
-    item.innerHTML = `
-      <div class="queue-left">
-        <div class="queue-title">${fila.nome}</div>
-        <div class="queue-sub">${fila.endereco}</div>
-        ${idBanco ? `<div class="queue-sub">${idBanco}</div>` : ""}
-        ${idLocal ? `<div class="queue-sub">${idLocal}</div>` : ""}
-      </div>
-      <span class="badge ${statusTxt === "ABERTA" ? "badge-on" : ""}">
-        ${statusTxt === "ABERTA" ? "Ativa" : "Inativa"}
-      </span>
-    `;
-
-    listaFilas.appendChild(item);
-  });
-}
-
-// ===============================
-// salvar nova fila (AGORA SALVA NO BANCO)
-// ===============================
-if (btnSalvar){
+if (btnSalvar) {
   btnSalvar.addEventListener("click", async () => {
 
-    // ✅ precisa estar logado
     const estabId = Number(localStorage.getItem("estabelecimento_id") || 0);
     if (!estabId) {
       alert("Faça login novamente. ID do estabelecimento não encontrado.");
@@ -184,68 +174,46 @@ if (btnSalvar){
     }
 
     const nome = (nomeFila?.value || "").trim();
-    const endereco = (enderecoFila?.value || "").trim();
     const tempo = Number(tempoMedio?.value);
 
-    if (!nome || !endereco || !Number.isFinite(tempo) || tempo <= 0){
-      alert("Preencha os campos obrigatórios (Nome, Endereço e Tempo médio).");
+    if (!nome || !Number.isFinite(tempo) || tempo <= 0) {
+      alert("Preencha os campos obrigatórios (Nome e Tempo médio).");
       return;
     }
 
-    // ✅ payload para seu backend (main.py)
+    const capRaw = (capacidade?.value ?? "").toString().trim();
+    const capNum = capRaw ? Number(capRaw) : null;
+    const capFinal = (capNum && Number.isFinite(capNum) && capNum > 0) ? capNum : null;
+
+    const raio = rangeMeters ? Number(rangeMeters.value) : 500;
+
     const payloadAPI = {
       estabelecimento_id: estabId,
-      status: (toggleAtiva?.checked ? "ABERTA" : "FECHADA"),
+      status: toggleAtiva?.checked ? "ABERTA" : "FECHADA",
       nome,
-      endereco,
-      raio_metros: rangeMeters ? Number(rangeMeters.value) : 500,
+      raio_metros: raio,
       tempo_medio_min: tempo,
-      capacidade_max: capacidade?.value ? Number(capacidade.value) : null,
+      capacidade_max: capFinal,
       mensagem_boas_vindas: (msgBoasVindas?.value || "").trim() || null,
       horario_funcionamento: (horario?.value || "").trim() || null,
       observacoes: (observacoes?.value || "").trim() || null,
     };
 
     try {
-      // ✅ cria no banco
       const resp = await postJSON("/api/filas", payloadAPI);
+      alert(`Fila criada no banco! ID: ${resp?.idFila ?? "—"}`);
 
-      // ✅ mantém também um “espelho” no localStorage (opcional)
-      const novaFilaLocal = {
-        id: gerarID(),
-        idFila: resp?.idFila,
-        nome,
-        endereco,
-        raio: payloadAPI.raio_metros,
-        tempoMedio: tempo,
-        capacidade: payloadAPI.capacidade_max,
-        ativa: payloadAPI.status === "ABERTA",
-        status: payloadAPI.status,
-        mensagem: payloadAPI.mensagem_boas_vindas,
-        horario: payloadAPI.horario_funcionamento,
-        observacoes: payloadAPI.observacoes,
-        criadaEm: Date.now()
-      };
-
-      const filas = obterFilas();
-      filas.unshift(novaFilaLocal);
-      salvarFilas(filas);
-      renderFilas();
-
-      alert(`Fila criada no banco! ID: ${resp.idFila}`);
-
+      // limpar
       if (nomeFila) nomeFila.value = "";
-      if (enderecoFila) enderecoFila.value = "";
       if (msgBoasVindas) msgBoasVindas.value = "";
       if (horario) horario.value = "";
       if (observacoes) observacoes.value = "";
       if (capacidade) capacidade.value = "";
 
+      atualizarRangeUI();
     } catch (e) {
-      alert(e.message || "Erro ao criar fila");
+      alert(extrairMensagemErro(e));
+      console.error("[CRIAR FILA] erro:", e);
     }
   });
 }
-
-// init
-renderFilas();

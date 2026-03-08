@@ -29,9 +29,9 @@ function showToast(msg){
   setTimeout(() => toast.classList.remove("show"), 1500);
 }
 
-// ===== Topbar nome (mesmo padrão que você usou nas outras páginas) =====
+// ===== Topbar nome =====
 function setNomeTopbar(nome){
-  const el = document.getElementById("nomeEstabelecimento"); // se existir no HTML
+  const el = document.getElementById("nomeEstabelecimento");
   if (el) el.textContent = (nome || "—").trim();
 }
 
@@ -39,8 +39,13 @@ function setNomeTopbar(nome){
 const inpNome = document.getElementById("inpNome");
 const inpEndereco = document.getElementById("inpEndereco");
 const inpTelefone = document.getElementById("inpTelefone");
-const inpTempoMedio = document.getElementById("inpTempoMedio");
-const inpEmail = document.getElementById("inpEmail"); // só existe se você adicionar no HTML
+
+// ✅ garante bloqueio (mesmo se esquecer readonly no HTML)
+function bloquearCamposFixos(){
+  if (inpNome) inpNome.readOnly = true;
+  if (inpEndereco) inpEndereco.readOnly = true;
+}
+bloquearCamposFixos();
 
 // ===== Helpers =====
 async function getJSON(path){
@@ -50,34 +55,81 @@ async function getJSON(path){
   return data;
 }
 
-function preencherPerfil(est){
-  // tenta pegar nos nomes mais prováveis (seu backend pode variar)
-  const nome = (est?.nome || "").trim();
-  const email = (est?.email || est?.userEmail || "").trim();
-  const telefone = (est?.telefone || est?.whatsapp || est?.celular || "").trim();
+function digitsOnly(s){
+  return String(s || "").replace(/\D+/g, "");
+}
 
-  // endereço pode estar em campos separados
+// ===== Telefone/WhatsApp: máscara BR (11 dígitos) =====
+function formatBRPhone(value){
+  const d = digitsOnly(value).slice(0, 11);
+
+  // (00) 0000-0000
+  if (d.length <= 10){
+    const p1 = d.slice(0, 2);
+    const p2 = d.slice(2, 6);
+    const p3 = d.slice(6, 10);
+    if (!p1) return "";
+    if (d.length <= 2) return `(${p1}`;
+    if (d.length <= 6) return `(${p1}) ${p2}`;
+    return `(${p1}) ${p2}-${p3}`;
+  }
+
+  // (00) 00000-0000
+  const p1 = d.slice(0, 2);
+  const p2 = d.slice(2, 7);
+  const p3 = d.slice(7, 11);
+  return `(${p1}) ${p2}-${p3}`;
+}
+
+function bindPhoneMask(){
+  if (!inpTelefone) return;
+
+  // aplica máscara ao digitar
+  inpTelefone.addEventListener("input", () => {
+    const old = inpTelefone.value;
+    const masked = formatBRPhone(old);
+    inpTelefone.value = masked;
+  });
+
+  // ao colar, mascara também
+  inpTelefone.addEventListener("paste", () => {
+    setTimeout(() => {
+      inpTelefone.value = formatBRPhone(inpTelefone.value);
+    }, 0);
+  });
+}
+bindPhoneMask();
+
+function preencherPerfil(est){
+  const nome = (est?.nome || "").trim();
+  const telefone = (est?.telefone || "").trim();
+
+  // endereço: seu backend agora tem campos separados (logradouro/numero/bairro/cidade_end/uf)
   const endereco =
     (est?.endereco || "").trim() ||
-    [est?.rua, est?.numero, est?.bairro, est?.cidade, est?.estado]
+    [
+      est?.logradouro,
+      est?.numero,
+      est?.bairro,
+      est?.cidade_end || est?.cidade,
+      est?.uf || est?.estado
+    ]
       .filter(Boolean)
       .join(", ");
 
-  // tempo médio (se existir na tabela/endpoint)
-  const tempoMedio =
-    Number(est?.tempo_medio_min ?? est?.tempoMedio ?? est?.tempo_medio ?? 0);
+  if (inpNome) inpNome.value = nome || inpNome.value || "";
+  if (inpEndereco) inpEndereco.value = endereco || inpEndereco.value || "";
 
-  // preenche inputs (sem sobrescrever se não veio nada)
-  if (inpNome && nome) inpNome.value = nome;
-  if (inpEndereco && endereco) inpEndereco.value = endereco;
-  if (inpTelefone && telefone) inpTelefone.value = telefone;
-  if (inpEmail && email) inpEmail.value = email;
-  if (inpTempoMedio && Number.isFinite(tempoMedio) && tempoMedio > 0) inpTempoMedio.value = String(tempoMedio);
+  if (inpTelefone){
+    // máscara aplicada (aceita 10/11 dígitos)
+    inpTelefone.value = formatBRPhone(telefone);
+  }
 
   // topbar + localStorage
-  if (nome) {
+  if (nome){
     setNomeTopbar(nome);
     localStorage.setItem("estabelecimento_nome", nome);
+    localStorage.setItem("nomeEstabelecimento", nome);
   }
 }
 
@@ -90,7 +142,7 @@ async function carregarPerfil(){
     return;
   }
 
-  // primeiro tenta o nome do cache (pra não ficar "—")
+  // primeiro tenta o cache
   const nomeLS = (localStorage.getItem("estabelecimento_nome") || "").trim();
   if (nomeLS) setNomeTopbar(nomeLS);
 
@@ -99,20 +151,47 @@ async function carregarPerfil(){
   preencherPerfil(est);
 }
 
-// ===== Form salvar (por enquanto mock; depois você liga no backend) =====
+// ===== Form salvar =====
+// ✅ Agora só permite salvar TELEFONE (nome/endereço bloqueados)
+async function putJSON(path, body){
+  const res = await fetch(API_BASE + path, {
+    method: "PUT",
+    headers: { "Content-Type":"application/json" },
+    body: JSON.stringify(body || {})
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.detail || `Erro HTTP ${res.status}`);
+  return data;
+}
+
 const formPerfil = document.getElementById("formPerfil");
-formPerfil?.addEventListener("submit", (e) => {
+formPerfil?.addEventListener("submit", async (e) => {
   e.preventDefault();
 
-  const payload = {
-    nome: inpNome?.value.trim() || "",
-    endereco: inpEndereco?.value.trim() || "",
-    telefone: inpTelefone?.value.trim() || "",
-    tempoMedio: Number(inpTempoMedio?.value || 0)
-  };
+  try{
+    const estabId = Number(localStorage.getItem("estabelecimento_id") || 0);
+    if (!estabId) throw new Error("Sessão inválida. Faça login novamente.");
 
-  console.log("Salvar configurações:", payload);
-  showToast("Configurações salvas! (mock)");
+    // manda só dígitos
+    const telDigits = digitsOnly(inpTelefone?.value || "");
+
+    // validação básica (opcional)
+    if (telDigits && !(telDigits.length === 10 || telDigits.length === 11)){
+      throw new Error("Telefone inválido. Use DDD + número (10 ou 11 dígitos).");
+    }
+
+    await putJSON(`/api/estabelecimentos/${estabId}`, {
+      telefone: telDigits || null
+    });
+
+    // mantém máscara no input
+    if (inpTelefone) inpTelefone.value = formatBRPhone(telDigits);
+
+    showToast("Telefone atualizado!");
+  } catch (err){
+    console.error(err);
+    showToast(err?.message || "Erro ao salvar.");
+  }
 });
 
 // ===== Preferências (mock salvar local) =====
@@ -142,9 +221,9 @@ loadPrefs();
 
 // ===== Sair =====
 document.getElementById("btnSair")?.addEventListener("click", () => {
-  // limpa sessão do estabelecimento
   localStorage.removeItem("estabelecimento_id");
   localStorage.removeItem("estabelecimento_nome");
+  localStorage.removeItem("nomeEstabelecimento");
 
   showToast("Sessão encerrada!");
   setTimeout(() => {

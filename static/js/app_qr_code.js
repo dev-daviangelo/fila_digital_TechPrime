@@ -1,31 +1,19 @@
+/* =========================================================
+   app_qr_code.js — COMPLETO, ATUALIZADO E CORRIGIDO
+   ✅ Remove duplicações do nome do estabelecimento
+   ✅ Corrige erro de sintaxe (tinha um "+" perdido)
+   ✅ Imprimir SEM popup/SEM about:blank (print area no próprio DOM)
+   ✅ Mantém copiar/baixar/abrir link e lista de filas
+   ✅ PADRÃO AO VIVO: badge ABERTA/FECHADA (ícones)
+   ✅ EXCLUIDA NÃO APARECE NO QR CODE
+========================================================= */
+
 console.log("[QR] app_qr_code.js carregou");
 
-// ✅ garante que sempre exista nomeEstabelecimento
-(function syncNomeEstab() {
-  const ja = localStorage.getItem("nomeEstabelecimento");
-  if (ja && ja.trim()) return;
-
-  const n = localStorage.getItem("estabelecimento_nome");
-  if (n && n.trim()) localStorage.setItem("nomeEstabelecimento", n.trim());
-})();
-
-document.addEventListener("DOMContentLoaded", () => {
-  const nome =
-    localStorage.getItem("nomeEstabelecimento") ||
-    localStorage.getItem("estabelecimento_nome") ||
-    "—";
-
-  const el = document.getElementById("nomeEstabelecimento");
-  const header = document.getElementById("estabHeader");
-
-  if (el) el.textContent = nome;
-  if (header) header.title = `Estabelecimento: ${nome}`;
-});+
 // ===============================
 // ESTABELECIMENTO (nome dinâmico)
 // ===============================
 (function syncNomeEstab() {
-  // garante chave padrão
   const ja = localStorage.getItem("nomeEstabelecimento");
   if (ja && ja.trim()) return;
 
@@ -52,44 +40,27 @@ function preencherNomeNoTopo() {
   if (header) header.title = `Estabelecimento: ${nome || "—"}`;
 }
 
-document.addEventListener("DOMContentLoaded", preencherNomeNoTopo);
-
-// ================= SIDEBAR MOBILE =================
-const sidebar = document.getElementById("sidebar");
-const backdrop = document.getElementById("backdrop");
-const menuBtn = document.getElementById("menuBtn");
-
-function openSidebar() {
-  sidebar?.classList.add("open");
-  backdrop?.classList.add("show");
+// ✅ evita quebrar HTML se nome/link tiver caracteres especiais
+function escapeHtml(str) {
+  return String(str ?? "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
 }
-function closeSidebar() {
-  sidebar?.classList.remove("open");
-  backdrop?.classList.remove("show");
-}
-menuBtn?.addEventListener("click", openSidebar);
-backdrop?.addEventListener("click", closeSidebar);
 
 // ================= BASES =================
-// API e FRONT no mesmo FastAPI
 const ORIGIN = window.location.origin;
-const API_BASE = ORIGIN; // /api/...
-const LOCAL_TEMPLATES_BASE = ORIGIN + "/templates/"; // para abrir páginas localmente
+const API_BASE = ORIGIN;
 
 // ✅ Vai ser preenchido com o NGROK salvo no backend (se existir)
 let PUBLIC_ORIGIN = "";
 
 // ================= ELEMENTOS =================
-const filaList = document.getElementById("filaList");
-const filaNomeTop = document.getElementById("filaNomeTop");
-const filaLink = document.getElementById("filaLink");
-const btnOpenLink = document.getElementById("btnOpenLink");
-
-const qrBox = document.getElementById("qrBox");
-const btnBaixar = document.getElementById("btnBaixar");
-const btnCopiar = document.getElementById("btnCopiar");
-const btnImprimir = document.getElementById("btnImprimir");
-const toast = document.getElementById("toast");
+let sidebar, backdrop, menuBtn;
+let filaList, filaNomeTop, filaLink, btnOpenLink;
+let qrBox, btnBaixar, btnCopiar, btnImprimir, toast;
 
 // ================= ESTADO =================
 let filas = [];
@@ -135,13 +106,31 @@ function normalizarFila(item) {
     item.idFilaINT ??
     item.idFilaPk;
 
+  const statusRaw = item.status || item.status_fila;
+  const status = String(statusRaw || "").toUpperCase().trim();
+
   return {
     ...item,
     __id: id,
-    nome: item.nome || item.nome_fila || item.fila_nome || (id ? `Fila #${id}` : "Fila"),
-    status: item.status || item.status_fila,
-    ativa: item.ativa ?? (String(item.status || "").toUpperCase() === "ABERTA"),
+    nome:
+      item.nome ||
+      item.nome_fila ||
+      item.fila_nome ||
+      (id ? `Fila #${id}` : "Fila"),
+    status: statusRaw || status,
+    ativa: item.ativa ?? (status === "ABERTA"),
   };
+}
+
+function normalizarStatus(statusRaw, ativa) {
+  const s = String(statusRaw || "").toUpperCase().trim();
+  if (s) return s;
+  return ativa ? "ABERTA" : "FECHADA";
+}
+
+function isExcluidaStatus(s) {
+  const up = String(s || "").toUpperCase().trim();
+  return up === "EXCLUIDA" || up === "EXCLUÍDA";
 }
 
 // ================= ✅ Pega NGROK salvo no backend =================
@@ -165,16 +154,25 @@ async function carregarPublicUrl() {
 function gerarLinkCliente(filaId) {
   const base = (PUBLIC_ORIGIN || ORIGIN).replace(/\/+$/, "");
 
-  // ✅ login dentro de /templates
   const url = new URL(`${base}/templates/login.html`);
-
-  // ✅ next também com /templates (pra não dar 404)
   url.searchParams.set("next", "/templates/Fila_cliente.html");
-
-  // ✅ id da fila
   url.searchParams.set("filaId", String(filaId));
 
   return url.toString();
+}
+
+// ================= BADGE (IGUAL AO AO VIVO) =================
+function badgeFila(status) {
+  const s = String(status || "").toUpperCase().trim();
+
+  if (s === "ABERTA") {
+    // ✅ usa suas classes de cor do QR
+    return `<span class="badge badge-aberta"><i class="bi bi-unlock"></i> ABERTA</span>`;
+  }
+  if (s === "FECHADA") {
+    return `<span class="badge badge-fechada"><i class="bi bi-lock"></i> FECHADA</span>`;
+  }
+  return `<span class="badge">${escapeHtml(s || "-")}</span>`;
 }
 
 // ================= LISTA DE FILAS =================
@@ -190,19 +188,19 @@ function renderLista() {
     .map((f) => {
       const id = f.__id;
       const nome = f.nome || `Fila #${id}`;
-      const statusRaw = f.status || (f.ativa ? "ABERTA" : "FECHADA");
-      const status = String(statusRaw || "").toUpperCase();
-      const isOpen = status === "ABERTA" || f.ativa === true;
+      const status = normalizarStatus(f.status, f.ativa);
 
       const isSelected = String(id) === String(filaSelecionada?.__id);
 
       return `
         <div class="queue-card ${isSelected ? "" : "inactive"}" data-id="${String(id)}">
           <div>
-            <div class="queue-title">${nome}</div>
-            <div class="queue-sub">Status: ${status || "-"}</div>
+            <div class="queue-title">${escapeHtml(nome)}</div>
+            <div class="queue-sub">
+              <span class="status-label">Status: ${escapeHtml(status)}</span>
+            </div>
           </div>
-          <span class="badge">${isOpen ? "Aberta" : "Fechada"}</span>
+          ${badgeFila(status)}
         </div>
       `;
     })
@@ -242,12 +240,12 @@ function renderTudo() {
 }
 
 // ================= AÇÕES =================
-btnOpenLink?.addEventListener("click", () => {
+function abrirLink() {
   if (!linkSelecionado) return;
   window.open(linkSelecionado, "_blank", "noopener");
-});
+}
 
-btnCopiar?.addEventListener("click", async () => {
+async function copiarLink() {
   if (!linkSelecionado) return;
 
   try {
@@ -262,9 +260,9 @@ btnCopiar?.addEventListener("click", async () => {
     temp.remove();
     showToast("Link copiado!");
   }
-});
+}
 
-btnBaixar?.addEventListener("click", () => {
+function baixarQr() {
   const img = qrBox?.querySelector("img");
   const canvas = qrBox?.querySelector("canvas");
 
@@ -281,9 +279,12 @@ btnBaixar?.addEventListener("click", () => {
   a.click();
   a.remove();
   showToast("Baixado!");
-});
+}
 
-btnImprimir?.addEventListener("click", () => {
+/* =========================================================
+   ✅ IMPRIMIR DEFINITIVO (SEM POPUP / SEM about:blank)
+========================================================= */
+function imprimirQr() {
   const img = qrBox?.querySelector("img");
   const canvas = qrBox?.querySelector("canvas");
 
@@ -293,27 +294,58 @@ btnImprimir?.addEventListener("click", () => {
 
   if (!dataUrl) return showToast("Erro ao imprimir.");
 
-  const w = window.open("", "_blank", "noopener");
-  if (!w) return;
-
   const nome = filaSelecionada?.nome || `Fila #${filaSelecionada?.__id || ""}`;
+  const link = linkSelecionado || "";
 
-  w.document.write(`
-    <html>
-      <head><title>Imprimir QR</title></head>
-      <body style="display:grid;place-items:center;height:100vh;margin:0">
-        <div style="text-align:center;font-family:Arial;max-width:90vw">
-          <h2>${nome}</h2>
-          <img src="${dataUrl}" width="300" height="300"/>
-          <p style="word-break:break-all">${linkSelecionado}</p>
-        </div>
-        <script>window.onload=()=>window.print()</script>
-      </body>
-    </html>
-  `);
+  document.getElementById("print-area")?.remove();
+  document.getElementById("print-style")?.remove();
 
-  w.document.close();
-});
+  const printArea = document.createElement("div");
+  printArea.id = "print-area";
+  printArea.innerHTML = `
+    <div style="
+      min-height:100vh;
+      display:grid;
+      place-items:center;
+      font-family:Arial, sans-serif;
+      text-align:center;
+      background:#fff;
+      color:#000;
+      padding:24px;
+      box-sizing:border-box;
+    ">
+      <div style="max-width:90vw">
+        <h2 style="margin:0 0 16px">${escapeHtml(nome)}</h2>
+        <img id="print-qr-img" src="${dataUrl}" alt="QR Code" style="width:300px;height:300px" />
+        <p style="margin:16px 0 0; word-break:break-all; font-size:12px; opacity:.9">
+          ${escapeHtml(link)}
+        </p>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(printArea);
+
+  const style = document.createElement("style");
+  style.id = "print-style";
+  style.textContent = `
+    @media print {
+      body * { visibility: hidden !important; }
+      #print-area, #print-area * { visibility: visible !important; }
+      #print-area { position: fixed; inset: 0; }
+    }
+  `;
+  document.head.appendChild(style);
+
+  const cleanup = () => {
+    document.getElementById("print-area")?.remove();
+    document.getElementById("print-style")?.remove();
+    window.removeEventListener("afterprint", cleanup);
+  };
+  window.addEventListener("afterprint", cleanup);
+
+  void printArea.offsetHeight;
+  window.print();
+}
 
 // ================= CARREGAR FILAS =================
 async function carregarFilas() {
@@ -324,9 +356,13 @@ async function carregarFilas() {
     console.log("[QR] estabelecimento_id (raw):", estabIdRaw, "->", estabId);
 
     if (!Number.isFinite(estabId) || estabId <= 0) {
-      if (filaList) filaList.innerHTML = `<p style="opacity:.6">Faça login para ver as filas.</p>`;
+      if (filaList)
+        filaList.innerHTML = `<p style="opacity:.6">Faça login para ver as filas.</p>`;
       clearQr();
-      if (filaLink) { filaLink.textContent = ""; filaLink.href = "#"; }
+      if (filaLink) {
+        filaLink.textContent = "";
+        filaLink.href = "#";
+      }
       showToast("Faça login primeiro");
       return;
     }
@@ -350,8 +386,11 @@ async function carregarFilas() {
 
     if (!res.ok) {
       throw new Error(
-        (data && data.detail) ? data.detail :
-        (typeof data === "string" && data.trim() ? data : `HTTP ${res.status}`)
+        data && data.detail
+          ? data.detail
+          : typeof data === "string" && data.trim()
+          ? data
+          : `HTTP ${res.status}`
       );
     }
 
@@ -361,29 +400,97 @@ async function carregarFilas() {
     else if (data && Array.isArray(data.data)) lista = data.data;
     else lista = [];
 
-    filas = lista.map(normalizarFila);
+    // ✅ normaliza e REMOVE EXCLUIDAS (não aparecem no QR)
+    filas = lista
+      .map(normalizarFila)
+      .filter((f) => !isExcluidaStatus(f.status));
 
     if (!filas.length) {
-      if (filaList) filaList.innerHTML = `<p style="opacity:.6">Nenhuma fila encontrada para este estabelecimento.</p>`;
+      if (filaList)
+        filaList.innerHTML = `<p style="opacity:.6">Nenhuma fila encontrada para este estabelecimento.</p>`;
       clearQr();
-      if (filaLink) { filaLink.textContent = ""; filaLink.href = "#"; }
+      if (filaLink) {
+        filaLink.textContent = "";
+        filaLink.href = "#";
+      }
       return;
     }
 
-    filaSelecionada = filas.find((f) => f.ativa === true) || filas[0] || null;
-    renderTudo();
+    // ✅ seleção default: pega ABERTA primeiro, senão FECHADA
+    const primeiraAberta = filas.find((f) => normalizarStatus(f.status, f.ativa) === "ABERTA");
+    const primeiraFechada = filas.find((f) => normalizarStatus(f.status, f.ativa) === "FECHADA");
+    filaSelecionada = primeiraAberta || primeiraFechada || filas[0] || null;
 
+    renderTudo();
   } catch (err) {
     console.error("Erro carregarFilas:", err);
-    if (filaList) filaList.innerHTML = `<p style="opacity:.6">Erro ao carregar filas.</p>`;
+    if (filaList)
+      filaList.innerHTML = `<p style="opacity:.6">Erro ao carregar filas.</p>`;
     clearQr();
-    if (filaLink) { filaLink.textContent = ""; filaLink.href = "#"; }
-    showToast(err.message || "Erro ao carregar filas");
+    if (filaLink) {
+      filaLink.textContent = "";
+      filaLink.href = "#";
+    }
+    showToast(err?.message || "Erro ao carregar filas");
   }
 }
 
+// ================= SIDEBAR MOBILE =================
+function setupSidebar() {
+  sidebar = document.getElementById("sidebar");
+  backdrop = document.getElementById("backdrop");
+  menuBtn = document.getElementById("menuBtn");
+
+  function openSidebar() {
+    sidebar?.classList.add("open");
+    backdrop?.classList.add("show");
+  }
+  function closeSidebar() {
+    sidebar?.classList.remove("open");
+    backdrop?.classList.remove("show");
+  }
+
+  menuBtn?.addEventListener("click", openSidebar);
+  backdrop?.addEventListener("click", closeSidebar);
+}
+
 // ================= INIT =================
-(async function init() {
+document.addEventListener("DOMContentLoaded", async () => {
+  preencherNomeNoTopo();
+
+  filaList = document.getElementById("filaList");
+  filaNomeTop = document.getElementById("filaNomeTop");
+  filaLink = document.getElementById("filaLink");
+  btnOpenLink = document.getElementById("btnOpenLink");
+
+  qrBox = document.getElementById("qrBox");
+  btnBaixar = document.getElementById("btnBaixar");
+  btnCopiar = document.getElementById("btnCopiar");
+  btnImprimir = document.getElementById("btnImprimir");
+  toast = document.getElementById("toast");
+
+  setupSidebar();
+
+  btnOpenLink?.addEventListener("click", (e) => {
+    e?.preventDefault?.();
+    abrirLink();
+  });
+
+  btnCopiar?.addEventListener("click", (e) => {
+    e?.preventDefault?.();
+    copiarLink();
+  });
+
+  btnBaixar?.addEventListener("click", (e) => {
+    e?.preventDefault?.();
+    baixarQr();
+  });
+
+  btnImprimir?.addEventListener("click", (e) => {
+    e?.preventDefault?.();
+    imprimirQr();
+  });
+
   await carregarPublicUrl();
   await carregarFilas();
-})();
+});

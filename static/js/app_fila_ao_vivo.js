@@ -1,25 +1,5 @@
-console.log("[AO VIVO] app_fila_ao_vivo.js carregou");
+console.log("[AO VIVO] app_fila_ao_vivo.js (API /api) carregou");
 
-(function syncNomeEstab() {
-  const ja = localStorage.getItem("nomeEstabelecimento");
-  if (ja && ja.trim()) return;
-
-  const n = localStorage.getItem("estabelecimento_nome");
-  if (n && n.trim()) localStorage.setItem("nomeEstabelecimento", n.trim());
-})();
-
-document.addEventListener("DOMContentLoaded", () => {
-  const nome =
-    localStorage.getItem("nomeEstabelecimento") ||
-    localStorage.getItem("estabelecimento_nome") ||
-    "—";
-
-  const el = document.getElementById("nomeEstabelecimento");
-  const header = document.getElementById("estabHeader");
-
-  if (el) el.textContent = nome;
-  if (header) header.title = `Estabelecimento: ${nome}`;
-});
 // ===============================
 // ESTABELECIMENTO (nome dinâmico)
 // ===============================
@@ -42,7 +22,6 @@ function obterNomeEstabelecimento() {
       if (name && String(name).trim()) return String(name).trim();
     } catch {}
   }
-
   return null;
 }
 
@@ -50,14 +29,15 @@ function preencherNomeNoTopo() {
   const nome = obterNomeEstabelecimento();
   const el = document.getElementById("nomeEstabelecimento");
   const header = document.getElementById("estabHeader");
-
   if (el) el.textContent = nome || "—";
   if (header) header.title = `Estabelecimento: ${nome || "—"}`;
 }
 
 document.addEventListener("DOMContentLoaded", preencherNomeNoTopo);
 
-// ===== Sidebar mobile (somente nesta página) =====
+// ===============================
+// Sidebar mobile
+// ===============================
 const sidebar = document.getElementById("sidebar");
 const backdrop = document.getElementById("backdrop");
 const menuBtn = document.getElementById("menuBtn");
@@ -76,62 +56,174 @@ function closeSidebar(){
 if (menuBtn) menuBtn.addEventListener("click", openSidebar);
 if (backdrop) backdrop.addEventListener("click", closeSidebar);
 
-// ===== Elementos =====
+// ===============================
+// API
+// ===============================
+const API_BASE = window.location.origin;
+
+const ENDPOINTS = {
+  listarFilas: (estabId, status) => {
+    const qs = new URLSearchParams();
+    if (estabId) qs.set("estabelecimento_id", estabId);
+    // status: "ABERTA" | "FECHADA" | "EXCLUIDA" | null (todas)
+    if (status) qs.set("status", status);
+    const q = qs.toString();
+    return `${API_BASE}/api/filas${q ? "?" + q : ""}`;
+  },
+  abrirFila:   (id) => `${API_BASE}/api/filas/${encodeURIComponent(id)}/abrir`,
+  fecharFila:  (id) => `${API_BASE}/api/filas/${encodeURIComponent(id)}/fechar`,
+  excluirFila: (id) => `${API_BASE}/api/filas/${encodeURIComponent(id)}/excluir`,
+  listarClientes: (id) => `${API_BASE}/api/filas/${encodeURIComponent(id)}/clientes`,
+};
+
+// ===============================
+// ELEMENTOS
+// ===============================
+const filasGrid = document.getElementById("filasGrid");
+const buscaFila = document.getElementById("buscaFila");
+const filtroAbertas = document.getElementById("filtroAbertas");
+const filtroFechadas = document.getElementById("filtroFechadas");
+const filtroTodas = document.getElementById("filtroTodas");
+const filtroExcluidas = document.getElementById("filtroExcluidas"); // ✅ novo chip
+
 const queueList = document.getElementById("queueList");
 const queueCountLabel = document.getElementById("queueCountLabel");
 const btnRefresh = document.getElementById("btnRefresh");
-const filaSelect = document.getElementById("filaSelect");
+const connText = document.getElementById("connText");
 
-// ===== Storage =====
-const FILAS_KEY = "filasCriadas";
-const FILA_SELECIONADA_KEY = "filaSelecionadaId";
-const clientesKey = (filaId) => `clientesFila_${filaId}`;
+// ===============================
+// ESTADO
+// ===============================
+let filtroStatus = "ABERTA"; // ABERTA | FECHADA | EXCLUIDA | null (todas)
+let filas = [];
+let filaAtualId = null;
+let filaAtualNome = null;
+let clientes = [];
+let buscaTexto = "";
 
-function lerJSON(key, fallback){
-  try { return JSON.parse(localStorage.getItem(key) || JSON.stringify(fallback)); }
-  catch { return fallback; }
+// tenta pegar estab id (do seu login)
+function getEstabId(){
+  const tryKeys = ["estabelecimento_id", "estab_id", "idEstabelecimento"];
+  for (const k of tryKeys){
+    const v = localStorage.getItem(k);
+    if (v && String(v).trim()) return String(v).trim();
+  }
+  try {
+    const raw = localStorage.getItem("estabelecimento");
+    if (raw){
+      const obj = JSON.parse(raw);
+      if (obj?.id || obj?.idEstabelecimento) return String(obj.id || obj.idEstabelecimento);
+    }
+  } catch {}
+  return null;
 }
-function salvarJSON(key, value){
-  localStorage.setItem(key, JSON.stringify(value));
+
+// ===============================
+// HELPERS
+// ===============================
+function setConn(txt){ if (connText) connText.textContent = txt; }
+
+function setActiveChip(which){
+  [filtroAbertas, filtroFechadas, filtroTodas, filtroExcluidas]
+    .forEach(b => b && b.classList.remove("active"));
+  if (which) which.classList.add("active");
 }
 
-function pad3(n){
-  return String(n).padStart(3, "0");
+function escapeHtml(str){
+  return String(str ?? "")
+    .replaceAll("&","&amp;")
+    .replaceAll("<","&lt;")
+    .replaceAll(">","&gt;")
+    .replaceAll('"',"&quot;")
+    .replaceAll("'","&#039;");
 }
 
-function statusPill(s){
+function pad3(n){ return String(n).padStart(3,"0"); }
+
+function statusPillCliente(s){
   if (s === "no_raio"){
     return `<span class="pill pill-green"><i class="bi bi-geo-alt"></i> No raio</span>`;
   }
   return `<span class="pill pill-gray"><i class="bi bi-slash-circle"></i> Fora</span>`;
 }
 
-function normalizarCliente(c){
-  const num = Number.isFinite(Number(c.num)) ? Number(c.num) : Number(c.pos || 0);
-  return {
-    num,
-    nome: c.nome || "—",
-    hora: c.hora || "--:--",
-    tempo: c.tempo || "",
-    estimativa: c.estimativa || "",
-    status: c.status || "no_raio"
-  };
-}
+async function apiFetch(url, options = {}){
+  const res = await fetch(url, {
+    headers: { "Content-Type": "application/json", ...(options.headers || {}) },
+    ...options,
+  });
 
-let filaAtualId = "";
-let clientes = [];
-
-function obterFilasCriadas(){
-  return lerJSON(FILAS_KEY, []);
-}
-
-function carregarClientes(){
-  if (!filaAtualId){
-    clientes = [];
-    return;
+  if (!res.ok){
+    let detail = "";
+    try {
+      const j = await res.json();
+      detail = j?.detail ? ` (${j.detail})` : "";
+    } catch {}
+    throw new Error(`HTTP ${res.status}${detail}`);
   }
-  clientes = lerJSON(clientesKey(filaAtualId), []).map(normalizarCliente);
-  clientes.sort((a,b) => a.num - b.num);
+
+  if (res.status === 204) return null;
+  return res.json();
+}
+
+// ===============================
+// TEMPLATES
+// ===============================
+function badgeFila(status){
+  const s = String(status || "").toUpperCase();
+  if (s === "ABERTA")   return `<span class="badge ABERTA"><i class="bi bi-unlock"></i> ABERTA</span>`;
+  if (s === "FECHADA")  return `<span class="badge FECHADA"><i class="bi bi-lock"></i> FECHADA</span>`;
+  if (s === "EXCLUIDA") return `<span class="badge EXCLUIDA"><i class="bi bi-trash"></i> EXCLUIDA</span>`;
+  return `<span class="badge">${escapeHtml(s)}</span>`;
+}
+
+function filaCardTemplate(f){
+  const id = f.idFila ?? f.id;
+  const nome = f.nome ?? `Fila ${id}`;
+  const status = (f.status || "ABERTA").toUpperCase();
+  const selected = String(id) === String(filaAtualId) ? " selected" : "";
+
+  // ✅ Ajustes pedidos:
+  // - EXCLUIDA: só badge, sem texto repetido
+  // - excluir: botão com X + "Excluir fila" em vermelho
+  let actions = "";
+
+  if (status === "ABERTA"){
+    actions = `
+      <button class="btn small" data-action="fechar" data-id="${id}" type="button">
+        <i class="bi bi-lock"></i> Fechar
+      </button>
+
+      <button class="icon-x" data-action="excluir" data-id="${id}" type="button" title="Excluir fila">
+        <i class="bi bi-x-lg"></i>
+        <span class="x-text">Excluir fila</span>
+      </button>
+    `;
+  } else if (status === "FECHADA"){
+    actions = `
+      <button class="btn small" data-action="abrir" data-id="${id}" type="button">
+        <i class="bi bi-unlock"></i> Abrir
+      </button>
+
+      <button class="icon-x" data-action="excluir" data-id="${id}" type="button" title="Excluir fila">
+        <i class="bi bi-x-lg"></i>
+        <span class="x-text">Excluir fila</span>
+      </button>
+    `;
+  } else {
+    // EXCLUIDA: sem ações
+    actions = ``;
+  }
+
+  return `
+    <div class="fila-card${selected}" data-pick-id="${id}">
+      <div class="fila-card__top">
+        <div class="fila-card__name">${escapeHtml(nome)}</div>
+        ${badgeFila(status)}
+      </div>
+      ${actions ? `<div class="fila-card__actions">${actions}</div>` : ``}
+    </div>
+  `;
 }
 
 function itemTemplate(item){
@@ -140,32 +232,107 @@ function itemTemplate(item){
       <div class="left">
         <div class="tag-num">#${pad3(item.num)}</div>
         <div class="info">
-          <div class="name">${item.nome}</div>
+          <div class="name">${escapeHtml(item.nome)}</div>
           <div class="meta">
-            <span><i class="bi bi-clock"></i> ${item.hora}</span>
+            <span><i class="bi bi-clock"></i> ${escapeHtml(item.hora || "--:--")}</span>
             <span>•</span>
-            <span>${item.tempo}</span>
+            <span>${escapeHtml(item.tempo || "")}</span>
             <span>•</span>
-            <span>${item.estimativa}</span>
+            <span>${escapeHtml(item.estimativa || "—")}</span>
           </div>
         </div>
       </div>
-
       <div class="right">
-        ${statusPill(item.status)}
-        <button class="more-btn" title="Alternar status (simulação)">
-          <i class="bi bi-three-dots-vertical"></i>
-        </button>
+        ${statusPillCliente(item.status)}
       </div>
     </div>
   `;
 }
 
-function render(){
-  if (queueCountLabel) queueCountLabel.textContent = `Aguardando (${clientes.length})`;
+// ===============================
+// RENDER
+// ===============================
+function renderFilas(){
+  if (!filasGrid) return;
 
+  const q = (buscaTexto || "").trim().toLowerCase();
+  const filtradas = q
+    ? filas.filter(f => String(f.nome ?? "").toLowerCase().includes(q))
+    : filas;
+
+  if (!filtradas.length){
+    filasGrid.innerHTML = `<p style="opacity:.6;font-size:12px">Nenhuma fila encontrada.</p>`;
+    return;
+  }
+
+  filasGrid.innerHTML = filtradas.map(filaCardTemplate).join("");
+
+  // Selecionar fila (não deixa selecionar excluída)
+  filasGrid.querySelectorAll("[data-pick-id]").forEach(card => {
+    card.addEventListener("click", (e) => {
+      if (e.target.closest("button")) return;
+      const id = card.getAttribute("data-pick-id");
+      const f = filas.find(x => String((x.idFila ?? x.id)) === String(id));
+      if (!f) return;
+
+      const st = String(f.status || "").toUpperCase();
+      if (st === "EXCLUIDA") return; // ✅ não seleciona
+      selecionarFila(f);
+    });
+  });
+
+  // Ações
+  filasGrid.querySelectorAll("button[data-action]").forEach(btn => {
+    btn.addEventListener("click", async (e) => {
+      e.stopPropagation();
+      const action = btn.getAttribute("data-action");
+      const id = btn.getAttribute("data-id");
+
+      try{
+        if (action === "abrir")  await apiFetch(ENDPOINTS.abrirFila(id), { method: "PATCH" });
+        if (action === "fechar") await apiFetch(ENDPOINTS.fecharFila(id), { method: "PATCH" });
+
+        if (action === "excluir"){
+          if (!confirm(`Excluir a fila #${id}? Ela ficará como EXCLUIDA.`)) return;
+          await apiFetch(ENDPOINTS.excluirFila(id), { method: "PATCH" });
+          if (String(id) === String(filaAtualId)){
+            filaAtualId = null;
+            filaAtualNome = null;
+            clientes = [];
+            renderClientes();
+          }
+        }
+
+        await carregarFilas();
+      } catch(err){
+        alert(`Falha: ${err.message || err}`);
+      }
+    });
+  });
+}
+
+function renderClientes(){
+  const nomeFilaTxt = filaAtualNome ? `${filaAtualNome}` : "—";
+  if (queueCountLabel) queueCountLabel.textContent = nomeFilaTxt;
+
+  // ✅ Se NÃO tem fila selecionada
   if (!filaAtualId){
-    if (queueList) queueList.innerHTML = `<p style="opacity:.6;font-size:12px">Selecione uma fila para visualizar os clientes.</p>`;
+    if (filtroStatus === "ABERTA"){
+      if (queueList) {
+        queueList.innerHTML = `<p style="opacity:.6;font-size:12px">Selecione uma fila para visualizar os clientes.</p>`;
+      }
+    } else {
+      if (queueList) queueList.innerHTML = ``;
+    }
+    return;
+  }
+
+  // ✅ Se tem fila selecionada, só mostra lista/mensagens se a fila for ABERTA
+  const filaObj = filas.find(f => String((f.idFila ?? f.id)) === String(filaAtualId));
+  const statusFilaAtual = String(filaObj?.status || "").toUpperCase();
+
+  if (statusFilaAtual !== "ABERTA"){
+    if (queueList) queueList.innerHTML = ``;
     return;
   }
 
@@ -175,70 +342,118 @@ function render(){
   }
 
   if (queueList) queueList.innerHTML = clientes.map(itemTemplate).join("");
-
-  // Alterna status "no raio" / "fora" e salva
-  queueList.querySelectorAll(".more-btn").forEach((btn) => {
-    btn.addEventListener("click", (e) => {
-      const card = e.currentTarget.closest(".queue-item");
-      const num = parseInt(card.dataset.num, 10);
-      const idx = clientes.findIndex(q => q.num === num);
-      if (idx === -1) return;
-
-      clientes[idx].status = clientes[idx].status === "no_raio" ? "fora" : "no_raio";
-
-      salvarJSON(clientesKey(filaAtualId), clientes);
-      render();
-    });
-  });
 }
 
-function popularSelectFilas(){
-  const filas = obterFilasCriadas();
+// ===============================
+// LOAD
+// ===============================
+function selecionarFila(f){
+  const id = f.idFila ?? f.id;
+  filaAtualId = id;
+  filaAtualNome = f.nome ?? `Fila ${id}`;
+  carregarClientesDaFila();
+  renderFilas();
+}
 
-  filaSelect.innerHTML = "";
+async function carregarFilas(){
+  setConn("Conexão: API");
 
-  if (!filas.length){
-    const opt = document.createElement("option");
-    opt.value = "";
-    opt.textContent = "Nenhuma fila criada";
-    filaSelect.appendChild(opt);
-    filaAtualId = "";
+  const estabId = getEstabId();
+  const url = ENDPOINTS.listarFilas(estabId, filtroStatus || undefined);
+  const data = await apiFetch(url);
+
+  filas = Array.isArray(data) ? data : [];
+  renderFilas();
+
+  // ✅ se o filtro atual for EXCLUIDA, não tenta selecionar fila automaticamente
+  if (filtroStatus === "EXCLUIDA"){
+    filaAtualId = null;
+    filaAtualNome = null;
     clientes = [];
-    render();
+    renderClientes();
     return;
   }
 
-  filas.forEach(f => {
-    const opt = document.createElement("option");
-    opt.value = f.id;
-    opt.textContent = `${f.nome}${f.ativa ? "" : " (inativa)"}`;
-    filaSelect.appendChild(opt);
-  });
-
-  const salvo = localStorage.getItem(FILA_SELECIONADA_KEY);
-  const existe = filas.some(f => f.id === salvo);
-  filaAtualId = existe ? salvo : filas[0].id;
-
-  filaSelect.value = filaAtualId;
-  localStorage.setItem(FILA_SELECIONADA_KEY, filaAtualId);
-
-  carregarClientes();
-  render();
+  // ✅ se fila selecionada sumiu, escolhe a 1ª NÃO excluída
+  const existe = filas.some(f => String((f.idFila ?? f.id)) === String(filaAtualId));
+  if (!existe){
+    const primeiraValida = filas.find(f => String(f.status || "").toUpperCase() !== "EXCLUIDA");
+    if (primeiraValida){
+      selecionarFila(primeiraValida);
+    } else {
+      filaAtualId = null;
+      filaAtualNome = null;
+      clientes = [];
+      renderClientes();
+    }
+  }
 }
 
-filaSelect.addEventListener("change", () => {
-  filaAtualId = filaSelect.value;
-  localStorage.setItem(FILA_SELECIONADA_KEY, filaAtualId);
-  carregarClientes();
-  render();
+async function carregarClientesDaFila(){
+  if (!filaAtualId){
+    clientes = [];
+    renderClientes();
+    return;
+  }
+  const data = await apiFetch(ENDPOINTS.listarClientes(filaAtualId));
+  clientes = Array.isArray(data) ? data : [];
+  renderClientes();
+}
+
+// ===============================
+// UI EVENTS
+// ===============================
+if (buscaFila){
+  buscaFila.addEventListener("input", () => {
+    buscaTexto = buscaFila.value || "";
+    renderFilas();
+  });
+}
+
+if (filtroAbertas) filtroAbertas.addEventListener("click", async () => {
+  filtroStatus = "ABERTA";
+  setActiveChip(filtroAbertas);
+  await carregarFilas();
 });
 
-// Atualizar: recarrega do localStorage
-btnRefresh.addEventListener("click", () => {
-  carregarClientes();
-  render();
+if (filtroFechadas) filtroFechadas.addEventListener("click", async () => {
+  filtroStatus = "FECHADA";
+  setActiveChip(filtroFechadas);
+  await carregarFilas();
 });
 
-// Init
-popularSelectFilas();
-render();
+if (filtroExcluidas) filtroExcluidas.addEventListener("click", async () => {
+  filtroStatus = "EXCLUIDA";
+  setActiveChip(filtroExcluidas);
+  await carregarFilas();
+});
+
+if (filtroTodas) filtroTodas.addEventListener("click", async () => {
+  filtroStatus = null; // todas
+  setActiveChip(filtroTodas);
+  await carregarFilas();
+});
+
+if (btnRefresh) btnRefresh.addEventListener("click", async () => {
+  try{
+    await carregarFilas();
+    await carregarClientesDaFila();
+  } catch(err){
+    alert(`Falha: ${err.message || err}`);
+  }
+});
+
+// ===============================
+// INIT
+// ===============================
+document.addEventListener("DOMContentLoaded", async () => {
+  try{
+    setActiveChip(filtroAbertas);
+    await carregarFilas();
+    await carregarClientesDaFila();
+  } catch(err){
+    console.error(err);
+    setConn("Conexão: falhou (API)");
+    if (filasGrid) filasGrid.innerHTML = `<p style="opacity:.6;font-size:12px">Erro ao carregar filas da API.</p>`;
+  }
+});

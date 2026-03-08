@@ -47,7 +47,10 @@ function renderTopoNomeEstab(nome){
 const elFila = document.getElementById("fila");
 const elTempoMedio = document.getElementById("tempoMedioDash");
 const elEmAtendimento = document.getElementById("emAtendimentoDash");
-const elNoRaio = document.getElementById("noRaioDash");
+
+// NOVOS CARDS
+const elCancelados = document.getElementById("canceladosDash");
+const elConcluidos = document.getElementById("concluidosDash");
 
 const elProximoNome = document.getElementById("proximoNome");
 const btnChamar = document.getElementById("btnChamar");
@@ -109,7 +112,31 @@ function syncWS(filaIds){
     ws.onmessage = (e) => {
       try{
         const msg = JSON.parse(e.data);
-        if (msg?.type === "fila_update") atualizarDashboard(false).catch(()=>{});
+        if (msg?.type !== "fila_update") return;
+
+        // mantém atualização
+        atualizarDashboard(false).catch(()=>{});
+
+        // ✅ TOASTS APENAS: cliente entrou / saiu
+        const a = String(msg.action || "").toUpperCase();
+        const p = msg.payload || {};
+
+        if (a === "CLIENTE_ENTROU"){
+          const nome = p.nome || "Cliente";
+          const filaNome = p.fila_nome || p.filaNome || "Fila";
+          window.showToastTop?.(
+            "success",
+            `<b>${nome}</b> entrou na fila: <b>${filaNome}</b>.`
+          );
+        } else if (a === "CLIENTE_SAIU"){
+          const nome = p.nome || "Cliente";
+          const filaNome = p.fila_nome || p.filaNome || "Fila";
+          window.showToastTop?.(
+            "danger",
+            `<b>${nome}</b> saiu da fila: <b>${filaNome}</b>.`
+          );
+        }
+
       } catch {}
     };
 
@@ -119,27 +146,34 @@ function syncWS(filaIds){
 
 // ================= RENDER =================
 function renderResumo(data){
-  // ✅ Atualiza topo (prioriza o que vier da API, senão storage)
+  // ✅ topo nome
   const nomeLocal = localStorage.getItem("estabelecimento_nome");
   const nomeApi = data?.estabelecimento?.nome;
   const nome = (nomeApi || nomeLocal || "—");
 
-  // mantém storage atualizado
   if (nomeApi && String(nomeApi).trim()){
     localStorage.setItem("estabelecimento_nome", String(nomeApi).trim());
     localStorage.setItem("nomeEstabelecimento", String(nomeApi).trim());
   }
-
   renderTopoNomeEstab(nome);
 
-  if (elFila) elFila.textContent = String(data?.totais?.na_fila ?? 0);
+  // ✅ totais (todas as filas do estabelecimento)
+  const totais = data?.totais || {};
 
-  const tm = data?.totais?.tempo_medio_min ?? 12;
-  if (elTempoMedio) elTempoMedio.textContent = `${tm} min`;
+  if (elFila) elFila.textContent = String(totais.na_fila ?? 0);
 
-  if (elEmAtendimento) elEmAtendimento.textContent = String(data?.totais?.atendendo ?? 0);
-  if (elNoRaio) elNoRaio.textContent = String(data?.totais?.no_raio ?? 0);
+  const tm = totais.tempo_medio_min;
+  if (elTempoMedio) {
+    elTempoMedio.textContent =
+      (tm === null || tm === undefined) ? "-- min" : `${Math.round(Number(tm))} min`;
+  }
 
+  if (elEmAtendimento) elEmAtendimento.textContent = String(totais.em_atendimento ?? totais.atendendo ?? 0);
+
+  if (elCancelados) elCancelados.textContent = String(totais.cancelados ?? 0);
+  if (elConcluidos) elConcluidos.textContent = String(totais.concluidos ?? 0);
+
+  // ✅ próximo global do estabelecimento
   const prox = data?.proximo || null;
   if (!prox){
     if (elProximoNome) elProximoNome.textContent = "—";
@@ -195,9 +229,7 @@ btnChamar?.addEventListener("click", async () => {
 // ================= INIT =================
 (async () => {
   try {
-    // ✅ já pinta o nome do topo com o que tiver no storage
     renderTopoNomeEstab(localStorage.getItem("estabelecimento_nome") || "");
-
     await atualizarDashboard(true);
     setInterval(() => atualizarDashboard(false).catch(()=>{}), 5000);
   } catch (e) {
