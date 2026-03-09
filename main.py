@@ -1,6 +1,3 @@
-# main.py (COMPLETA E ATUALIZADA) — CORRIGIDA SEM MUDAR O QUE NÃO PRECISA
-# ✅ Correção principal: Atendimento agora considera CHAMADO + AGUARDANDO (compatível com Dashboard)
-# ✅ Mantém tudo que você já implementou
 
 from fastapi import FastAPI, HTTPException, Query, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
