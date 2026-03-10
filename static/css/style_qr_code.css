@@ -1,0 +1,544 @@
+:root{
+  --bg:#0b0c0e;
+  --border:rgba(255,255,255,.08);
+  --muted:rgba(255,255,255,.65);
+  --muted2:rgba(255,255,255,.45);
+  --text:#f4f5f7;
+
+  --accent:#ff7a00;
+  --accent2:#ff8f2a;
+  --success:#2bd576;
+
+  /* ✅ cores dos status (fixo dark/light) */
+  --open:#22c55e;
+  --closed:#facc15;
+}
+
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%}
+body{
+  font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+  background:
+    radial-gradient(1200px 700px at 30% 0%, rgba(255,122,0,.08), transparent 55%),
+    radial-gradient(900px 600px at 80% 20%, rgba(255,255,255,.05), transparent 55%),
+    var(--bg);
+  color:var(--text);
+}
+
+/* Layout */
+.app{display:grid;grid-template-columns:280px 1fr;min-height:100vh}
+
+/* Sidebar */
+.sidebar{
+  background:linear-gradient(180deg, #0e0f12 0%, #0a0b0d 100%);
+  border-right:1px solid var(--border);
+  display:flex;flex-direction:column;
+  padding:18px 14px;
+  position:sticky;top:0;height:100vh;
+}
+.brand{
+  display:flex;align-items:center;gap:12px;
+  padding:6px 10px 16px 10px;
+  border-bottom:1px solid var(--border);
+  margin-bottom:14px;
+}
+.avatar{
+  width:44px;height:44px;border-radius:14px;
+  background:rgba(255,122,0,.16);
+  display:grid;place-items:center;
+  color:var(--accent);
+  font-weight:800;
+  border:1px solid rgba(255,122,0,.25);
+  box-shadow:0 10px 30px rgba(255,122,0,.12);
+}
+.brand-meta{display:flex;flex-direction:column;line-height:1.15}
+.brand-name{font-weight:800;font-size:14px}
+.brand-sub{font-size:12px;color:var(--muted2);margin-top:2px}
+
+.nav{display:flex;flex-direction:column;gap:6px;padding:10px 6px;flex:1;overflow:auto}
+.nav a{
+  text-decoration:none;color:rgba(255,255,255,.8);
+  display:flex;align-items:center;gap:12px;
+  padding:12px 12px;border-radius:14px;
+  border:1px solid transparent;
+  transition:.2s ease;font-size:14px;
+}
+.nav a i{font-size:18px;opacity:.9}
+.nav a:hover{background:rgba(255,255,255,.04);border-color:rgba(255,255,255,.06)}
+.nav a.active{
+  background:rgba(255,122,0,.14);
+  border-color:rgba(255,122,0,.25);
+  color:#fff;
+  box-shadow:0 10px 25px rgba(255,122,0,.10);
+}
+.nav-sep{height:6px;margin:10px 8px;border-top:1px solid rgba(255,255,255,.06)}
+.sidebar-footer{
+  padding:10px 10px 6px;
+  border-top:1px solid rgba(255,255,255,.06);
+  color:rgba(255,255,255,.55);
+  font-size:12px;
+  text-align:center;
+}
+
+/* Content */
+.content{display:flex;flex-direction:column;min-width:0}
+
+/* Topbar */
+.topbar{
+  height:64px;display:flex;align-items:center;justify-content:space-between;
+  padding:0 22px;
+  border-bottom:1px solid var(--border);
+  background:linear-gradient(180deg, rgba(10,11,13,.9), rgba(10,11,13,.55));
+  backdrop-filter: blur(10px);
+  position:sticky;top:0;z-index:20;
+}
+.estab{
+  display:flex;align-items:center;gap:10px;
+  color:rgba(255,255,255,.8);font-size:13px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.dot{
+  width:8px;height:8px;border-radius:50%;
+  background:var(--success);
+  box-shadow:0 0 0 4px rgba(43,213,118,.15);
+}
+.estab b{color:#fff;font-weight:800}
+
+.top-actions{display:flex;align-items:center;gap:10px}
+
+/* botões topo */
+.icon-btn{
+  width:42px;height:42px;border-radius:14px;
+  border:1px solid rgba(255,255,255,.08);
+  background:rgba(255,255,255,.03);
+  color:#fff;
+  display:grid;place-items:center;
+  cursor:pointer;
+  transition:.2s ease;
+  padding:0;
+}
+.icon-btn:hover{
+  background:rgba(255,255,255,.05);
+  border-color:rgba(255,255,255,.12);
+  transform:translateY(-1px);
+}
+.icon-btn i{font-size:18px;opacity:.9;line-height:1}
+
+.mobile-top{display:none;align-items:center;gap:10px}
+
+/* Backdrop */
+.backdrop{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:50;display:none}
+.backdrop.show{display:block}
+
+/* Page */
+.page{padding:22px;max-width:1280px;width:100%}
+h1{margin:8px 0 4px;font-size:34px;letter-spacing:-.6px}
+.subtitle{color:var(--muted2);margin:0 0 18px;font-size:14px}
+
+/* Grid */
+.grid{
+  display:grid;
+  grid-template-columns: 1fr 1fr;
+  gap:14px;
+  align-items:start;
+}
+
+/* Panel */
+.panel{
+  border-radius:16px;
+  background:linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,.02));
+  border:1px solid rgba(255,255,255,.08);
+  box-shadow:0 12px 30px rgba(0,0,0,.35);
+  padding:16px;
+  min-height:520px;
+}
+.panel-head{
+  padding:4px 4px 12px;
+  border-bottom:1px solid rgba(255,255,255,.06);
+  margin-bottom:14px;
+}
+.panel-head h3{
+  font-size:13px;
+  color:rgba(255,255,255,.85);
+  font-weight:900;
+}
+.panel-head.center{text-align:center}
+.fila-name{
+  margin-top:6px;
+  font-size:13px;
+  font-weight:900;
+  color:#ffd2a7;
+}
+
+/* Left list */
+.queue-list{display:flex;flex-direction:column;gap:10px}
+.queue-card{
+  border-radius:14px;
+  border:1px solid rgba(255,122,0,.25);
+  background:rgba(255,122,0,.10);
+  padding:14px;
+  display:flex;
+  justify-content:space-between;
+  gap:12px;
+  cursor:pointer;
+  transition:.2s ease;
+}
+.queue-card:hover{transform:translateY(-1px);background:rgba(255,122,0,.12)}
+.queue-title{font-weight:900;font-size:13px;margin-bottom:6px}
+.queue-sub{font-size:12px;color:rgba(255,255,255,.60)}
+
+/* badge base (se não tiver status) */
+.badge{
+  align-self:flex-start;
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  padding:6px 10px;
+  border-radius:999px;
+  font-size:11px;
+  font-weight:900;
+  color:#ffd2a7;
+  border:1px solid rgba(255,122,0,.30);
+  background:rgba(255,122,0,.14);
+  white-space:nowrap;
+}
+
+.queue-card.inactive{
+  border-color:rgba(255,255,255,.10);
+  background:rgba(255,255,255,.03);
+}
+
+/* ✅ NÃO deixe inactive “matar” cores do badge */
+.queue-card.inactive .badge{
+  border-color:rgba(255,255,255,.12);
+  background:rgba(255,255,255,.04);
+  color:rgba(255,255,255,.65);
+}
+
+/* ==========================
+   ✅ STATUS (somente ABERTA / FECHADA)
+   funciona em DARK e LIGHT
+========================== */
+
+/* texto do status */
+.status-label{font-weight:700}
+.status-aberta{color:var(--open) !important}
+.status-fechada{color:var(--closed) !important}
+
+/* badge verde/amarelo */
+.badge.badge-aberta{
+  background: rgba(34,197,94,.12) !important;
+  border: 1px solid rgba(34,197,94,.35) !important;
+  color: var(--open) !important;
+}
+.badge.badge-fechada{
+  background: rgba(250,204,21,.12) !important;
+  border: 1px solid rgba(250,204,21,.35) !important;
+  color: var(--closed) !important;
+}
+
+/* ✅ mesmo quando o card estiver inactive */
+.queue-card.inactive .badge.badge-aberta{
+  background: rgba(34,197,94,.12) !important;
+  border: 1px solid rgba(34,197,94,.35) !important;
+  color: var(--open) !important;
+}
+.queue-card.inactive .badge.badge-fechada{
+  background: rgba(250,204,21,.12) !important;
+  border: 1px solid rgba(250,204,21,.35) !important;
+  color: var(--closed) !important;
+}
+
+/* QR */
+.qr-wrap{display:flex;justify-content:center;padding:10px 0 6px}
+.qr-box{
+  width:260px;height:260px;border-radius:16px;
+  background:#fff;padding:16px;
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:0 18px 40px rgba(255,122,0,.18);
+}
+.qr-box canvas,.qr-box img{width:100% !important;height:100% !important}
+
+/* Link */
+.link-box{
+  margin-top:10px;padding:12px;border-radius:14px;
+  border:1px solid rgba(255,255,255,.08);
+  background:rgba(0,0,0,.10);
+}
+.link-title{
+  font-size:12px;color:rgba(255,255,255,.65);
+  margin-bottom:8px;font-weight:800;text-align:center;
+}
+.link-row{
+  display:flex;align-items:center;justify-content:center;
+  gap:10px;flex-wrap:wrap;
+}
+.link-url{
+  color:#ffb36d;font-weight:800;font-size:12px;text-decoration:none;
+  max-width:520px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
+.open-btn{
+  width:36px;height:36px;border-radius:14px;
+  border:1px solid rgba(255,255,255,.08);
+  background:rgba(255,255,255,.03);
+  color:#fff;display:grid;place-items:center;
+  cursor:pointer;transition:.2s ease;
+}
+.open-btn:hover{background:rgba(255,255,255,.05);transform:translateY(-1px)}
+
+/* Buttons */
+.btns{
+  display:grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap:10px;margin-top:12px;
+}
+.btn{
+  border-radius:14px;
+  border:1px solid rgba(255,255,255,.10);
+  background:rgba(255,255,255,.03);
+  color:#fff;padding:12px 16px;
+  font-weight:900;cursor:pointer;transition:.2s ease;
+  display:inline-flex;align-items:center;justify-content:center;gap:10px;
+}
+.btn:hover{background:rgba(255,255,255,.05);transform:translateY(-1px)}
+.btn i{font-size:16px}
+
+.btn-primary{
+  background:var(--accent);
+  border-color:rgba(255,122,0,.55);
+  color:#0a0b0d;
+  box-shadow:0 14px 30px rgba(255,122,0,.18);
+}
+.btn-primary:hover{background:var(--accent2)}
+
+/* Toast */
+.toast{
+  position:fixed;right:18px;bottom:18px;
+  background:rgba(0,0,0,.75);
+  border:1px solid rgba(255,255,255,.10);
+  color:#fff;padding:10px 12px;border-radius:12px;
+  font-weight:900;font-size:12px;
+  opacity:0;transform:translateY(6px);
+  pointer-events:none;transition:.2s ease;
+}
+.toast.show{opacity:1;transform:translateY(0)}
+
+/* Responsive */
+@media (max-width: 1100px){
+  .grid{grid-template-columns:1fr}
+  .panel{min-height:auto}
+  .btns{grid-template-columns:1fr}
+  .link-url{max-width:320px}
+}
+@media (max-width: 860px){
+  .app{grid-template-columns:1fr}
+  .sidebar{
+    position:fixed;left:0;top:0;
+    transform:translateX(-102%);
+    transition:.25s ease;
+    z-index:60;
+    width:280px;
+  }
+  .sidebar.open{transform:translateX(0)}
+  .mobile-top{display:flex}
+}
+@media (max-width: 520px){
+  .page{padding:18px}
+  .topbar{padding:0 14px}
+  h1{font-size:28px}
+  .qr-box{width:230px;height:230px}
+}
+
+/* ===========================
+   ✅ TEMA CLARO
+=========================== */
+
+:root[data-theme="light"]{
+  --bg:#f6f7fb;
+  --border:rgba(0,0,0,.10);
+  --muted:rgba(18,19,24,.70);
+  --muted2:rgba(18,19,24,.55);
+  --text:#121318;
+
+  --accent:#ff7a00;
+  --accent2:#ff8f2a;
+  --success:#2bd576;
+}
+
+/* body light */
+:root[data-theme="light"] body{
+  background:
+    radial-gradient(1200px 700px at 30% 0%, rgba(255,122,0,.10), transparent 55%),
+    radial-gradient(900px 600px at 80% 20%, rgba(0,0,0,.05), transparent 55%),
+    var(--bg) !important;
+  color: var(--text) !important;
+}
+
+/* Sidebar/topbar */
+:root[data-theme="light"] .sidebar{
+  background: linear-gradient(180deg, #ffffff 0%, #f3f5fb 100%) !important;
+  border-right: 1px solid var(--border) !important;
+}
+:root[data-theme="light"] .brand-sub{ color: var(--muted2) !important; }
+:root[data-theme="light"] .nav a{ color: rgba(18,19,24,.82) !important; }
+:root[data-theme="light"] .nav a:hover{
+  background: rgba(0,0,0,.04) !important;
+  border-color: rgba(0,0,0,.06) !important;
+}
+:root[data-theme="light"] .nav-sep{ border-top-color: rgba(0,0,0,.08) !important; }
+:root[data-theme="light"] .sidebar-footer{
+  border-top-color: rgba(0,0,0,.08) !important;
+  color: rgba(18,19,24,.55) !important;
+}
+:root[data-theme="light"] .topbar{
+  background: linear-gradient(180deg, rgba(255,255,255,.92), rgba(255,255,255,.72)) !important;
+  border-bottom: 1px solid var(--border) !important;
+}
+:root[data-theme="light"] .estab{ color: rgba(18,19,24,.78) !important; }
+:root[data-theme="light"] .estab b{ color: var(--text) !important; }
+
+/* botões topo */
+:root[data-theme="light"] .icon-btn{
+  border-color: rgba(0,0,0,.10) !important;
+  background: rgba(0,0,0,.03) !important;
+  color: var(--text) !important;
+}
+:root[data-theme="light"] .icon-btn:hover{
+  background: rgba(0,0,0,.05) !important;
+  border-color: rgba(0,0,0,.14) !important;
+}
+
+/* Painéis */
+:root[data-theme="light"] .panel{
+  background: #ffffff !important;
+  border-color: rgba(0,0,0,.10) !important;
+  box-shadow: 0 12px 30px rgba(0,0,0,.10) !important;
+  color: var(--text) !important;
+}
+
+/* ✅ CRÍTICO: NÃO use ".panel * { color: ... !important }"
+   isso quebra as cores do status/badge */
+:root[data-theme="light"] .panel-head h3{ color: rgba(18,19,24,.85) !important; }
+:root[data-theme="light"] .subtitle{ color: var(--muted2) !important; }
+
+/* lista esquerda */
+:root[data-theme="light"] .queue-card{
+  border-color: rgba(255,122,0,.22) !important;
+  background: rgba(255,122,0,.10) !important;
+}
+:root[data-theme="light"] .queue-sub{ color: rgba(18,19,24,.65) !important; }
+:root[data-theme="light"] .queue-card.inactive{
+  border-color: rgba(0,0,0,.10) !important;
+  background: rgba(0,0,0,.03) !important;
+}
+
+/* link box */
+:root[data-theme="light"] .link-box{
+  background: rgba(0,0,0,.03) !important;
+  border-color: rgba(0,0,0,.10) !important;
+}
+:root[data-theme="light"] .link-title{ color: rgba(18,19,24,.60) !important; }
+:root[data-theme="light"] .link-url{ color: rgba(255,122,0,.95) !important; }
+:root[data-theme="light"] .open-btn{
+  background: rgba(0,0,0,.03) !important;
+  border-color: rgba(0,0,0,.10) !important;
+  color: rgba(18,19,24,.90) !important;
+}
+
+/* botões */
+:root[data-theme="light"] .btn{
+  background: rgba(0,0,0,.03) !important;
+  border-color: rgba(0,0,0,.10) !important;
+  color: rgba(18,19,24,.90) !important;
+}
+:root[data-theme="light"] .btn:hover{ background: rgba(0,0,0,.05) !important; }
+:root[data-theme="light"] .btn-primary{
+  background: var(--accent) !important;
+  border-color: rgba(255,122,0,.55) !important;
+  color: #0b0c0e !important;
+}
+
+/* toast */
+:root[data-theme="light"] .toast{
+  background: rgba(0,0,0,.78) !important;
+  border-color: rgba(255,255,255,.12) !important;
+  color: #fff !important;
+}
+
+/* ===== Logo da Sidebar ===== */
+.avatar.avatar-logo{
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  width:44px;height:44px;border-radius:14px;overflow:hidden;
+}
+.brand-logo{
+  width:44px;height:44px;
+  object-fit: contain;
+  display:block;
+}
+/* =========================================================
+   PATCH — BADGE IGUAL AO "FILA AO VIVO"
+   (cole NO FINAL do style_qr_code.css)
+========================================================= */
+
+/* cores tipo "Fila ao Vivo" */
+:root{
+  --fv-open: #22c55e;     /* verde */
+  --fv-closed: #f59e0b;   /* dourado/laranja */
+  --fv-open-bg: rgba(34,197,94,.14);
+  --fv-open-bd: rgba(34,197,94,.35);
+  --fv-closed-bg: rgba(245,158,11,.14);
+  --fv-closed-bd: rgba(245,158,11,.40);
+}
+
+/* BADGE ABERTA */
+.queue-card .badge.badge-aberta{
+  background: var(--fv-open-bg) !important;
+  border: 1px solid var(--fv-open-bd) !important;
+  color: var(--fv-open) !important;
+}
+
+/* BADGE FECHADA */
+.queue-card .badge.badge-fechada{
+  background: var(--fv-closed-bg) !important;
+  border: 1px solid var(--fv-closed-bd) !important;
+  color: var(--fv-closed) !important;
+}
+
+/* NÃO deixa "inactive" apagar cor */
+.queue-card.inactive .badge.badge-aberta{
+  background: var(--fv-open-bg) !important;
+  border: 1px solid var(--fv-open-bd) !important;
+  color: var(--fv-open) !important;
+}
+.queue-card.inactive .badge.badge-fechada{
+  background: var(--fv-closed-bg) !important;
+  border: 1px solid var(--fv-closed-bd) !important;
+  color: var(--fv-closed) !important;
+}
+
+/* garante que no LIGHT também não perde (por causa de regras fortes do tema) */
+:root[data-theme="light"] .queue-card .badge.badge-aberta,
+:root[data-theme="light"] .queue-card .badge.badge-fechada,
+:root[data-theme="light"] .queue-card.inactive .badge.badge-aberta,
+:root[data-theme="light"] .queue-card.inactive .badge.badge-fechada{
+  background: inherit;
+  border: inherit;
+  color: inherit;
+}
+:root[data-theme="light"] .queue-card .badge.badge-aberta,
+:root[data-theme="light"] .queue-card.inactive .badge.badge-aberta{
+  background: var(--fv-open-bg) !important;
+  border: 1px solid var(--fv-open-bd) !important;
+  color: var(--fv-open) !important;
+}
+:root[data-theme="light"] .queue-card .badge.badge-fechada,
+:root[data-theme="light"] .queue-card.inactive .badge.badge-fechada{
+  background: var(--fv-closed-bg) !important;
+  border: 1px solid var(--fv-closed-bd) !important;
+  color: var(--fv-closed) !important;
+}
