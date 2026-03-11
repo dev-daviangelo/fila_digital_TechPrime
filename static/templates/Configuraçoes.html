@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Configurações - Painel</title>
+
+  <!-- Font -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <!-- Icons -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+
+  <!-- CSS exclusivo -->
+  <link rel="stylesheet" href="/static/css/style_configuraçoes.css">
+</head>
+
+<body>
+  <div class="app">
+    <!-- SIDEBAR -->
+    <aside class="sidebar" id="sidebar">
+      <div class="brand">
+        <div class="avatar avatar-logo">
+          <img src="/assets/img/NAV3.png" alt="ANDA LOGO" class="brand-logo">
+        </div>
+        <div class="brand-meta">
+          <div class="brand-name">ANDA LOGO</div>
+          <div class="brand-sub">Painel do Estabelecimento</div>
+        </div>
+      </div>
+
+      <nav class="nav">
+        <a href="Dashboard.html"><i class="bi bi-grid"></i>Dashboard</a>
+        <a href="Criar_FIla.html"><i class="bi bi-plus-lg"></i>Criar Fila</a>
+        <a href="Atendimento.html"><i class="bi bi-person"></i>Atendimento</a>
+        <a href="Fila_ao_vivo.html"><i class="bi bi-list-task"></i>Fila ao Vivo</a>
+        <a href="Qr_code.html"><i class="bi bi-qr-code"></i>QR Code</a>
+
+        <div class="nav-sep"></div>
+
+        <a class="active" href="Configuraçoes.html"><i class="bi bi-gear"></i>Configurações</a>
+      </nav>
+
+      <div class="sidebar-footer">© 2026 ANDA LOGO</div>
+    </aside>
+
+    <!-- BACKDROP (mobile) -->
+    <div class="backdrop" id="backdrop"></div>
+
+    <!-- CONTENT -->
+    <main class="content">
+      <!-- TOPBAR -->
+      <header class="topbar">
+        <div class="mobile-top">
+          <button id="menuBtn" class="icon-btn" aria-label="Abrir menu">
+            <i class="bi bi-list"></i>
+          </button>
+        </div>
+
+        <!-- ✅ TOPO DINÂMICO -->
+        <div class="estab" id="estabHeader" title="Estabelecimento">
+          <span class="dot"></span>
+          <span>Estabelecimento:</span>
+          <b>&nbsp;<span id="nomeEstabelecimento">—</span></b>
+        </div>
+
+        <button class="icon-btn" type="button" data-theme-toggle title="Tema">
+          <i class="bi bi-sun"></i>
+        </button>
+      </header>
+
+      <!-- PAGE -->
+      <section class="page">
+        <h1>Configurações</h1>
+        <p class="subtitle">Ajuste preferências do seu estabelecimento</p>
+
+        <div class="grid">
+          <!-- PERFIL -->
+          <div class="panel">
+            <div class="panel-head">
+              <div class="panel-title">
+                <span class="panel-ico"><i class="bi bi-building"></i></span>
+                <h3>Perfil do Estabelecimento</h3>
+              </div>
+            </div>
+
+            <form class="form" id="formPerfil">
+              <div class="field">
+                <label>Nome do estabelecimento</label>
+                <input id="inpNome" type="text" placeholder="Ex.: Barbearia Premium" value="">
+              </div>
+
+              <div class="field">
+                <label>Endereço</label>
+                <input id="inpEndereco" type="text" placeholder="Ex.: Rua das Flores, 123 - Centro" value="">
+              </div>
+
+              <div class="row-2">
+                <div class="field">
+                  <label>Telefone/WhatsApp</label>
+                  <input id="inpTelefone" type="text" placeholder="(00) 00000-0000" value="">
+                </div>
+
+                <div class="field">
+                  <label>Tempo médio (min)</label>
+                  <input id="inpTempoMedio" type="number" min="1" value="15">
+                </div>
+              </div>
+
+              <div class="actions">
+                <button type="submit" class="btn btn-primary">
+                  <i class="bi bi-check2"></i> Salvar alterações
+                </button>
+              </div>
+            </form>
+          </div>
+
+          <!-- PREFERÊNCIAS -->
+          <div class="panel">
+            <div class="panel-head">
+              <div class="panel-title">
+                <span class="panel-ico"><i class="bi bi-sliders"></i></span>
+                <h3>Preferências</h3>
+              </div>
+            </div>
+
+            <div class="prefs">
+              <div class="pref">
+                <div class="pref-left">
+                  <div class="pref-title">Notificações</div>
+                  <div class="pref-sub">Ativar alertas e avisos do sistema</div>
+                </div>
+                <label class="switch">
+                  <input id="togNotif" type="checkbox" checked>
+                  <span class="slider"></span>
+                </label>
+              </div>
+
+              <div class="pref">
+                <div class="pref-left">
+                  <div class="pref-title">Fila ao vivo</div>
+                  <div class="pref-sub">Atualizar lista automaticamente</div>
+                </div>
+                <label class="switch">
+                  <input id="togLive" type="checkbox" checked>
+                  <span class="slider"></span>
+                </label>
+              </div>
+
+              <div class="pref">
+                <div class="pref-left">
+                  <div class="pref-title">QR Code público</div>
+                  <div class="pref-sub">Permitir acesso via QR para clientes</div>
+                </div>
+                <label class="switch">
+                  <input id="togQr" type="checkbox" checked>
+                  <span class="slider"></span>
+                </label>
+              </div>
+
+              <div class="divider"></div>
+
+              <div class="danger">
+                <div class="danger-left">
+                  <div class="danger-title">Sair da conta</div>
+                  <div class="danger-sub">Encerrar sessão neste dispositivo</div>
+                </div>
+                <button class="btn btn-danger" id="btnSair" type="button">
+                  <i class="bi bi-box-arrow-right"></i> Sair
+                </button>
+              </div>
+            </div>
+
+            <div class="toast" id="toast">Salvo!</div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- JS exclusivo -->
+  <!-- JS exclusivo -->
+  <script src="/static/js/app_theme.js"></script>
+  <script src="/static/js/app_configuraçoes.js?v=1"></script>
+</body>
+</html>
