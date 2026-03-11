@@ -129,10 +129,11 @@
               </div>
             </div>
 
-            <div class="now-box">
-              <div class="now-title">Atendendo agora</div>
-              <div class="now-text" id="atendendoAgora">Nenhum cliente sendo atendido</div>
-            </div>
+        <div class="now-box">
+          <div class="now-title">Atendendo agora</div>
+          <div class="now-text" id="atendendoAgora">Nenhum cliente sendo atendido</div>
+          <div class="now-location-status" id="statusRaioAtendimento">—</div>
+        </div>
 
             <div class="next-box">
               <div class="next-top">
@@ -234,13 +235,12 @@
     </div>
   </div>
 
-  <!-- ✅ Toast stack (SÓ 1) -->
-  <div class="toast-stack" id="toastStack"></div>
-
   <!-- JS (ORDEM CERTA) -->
-  <script src="/static/js/app_toasts.js?v=1"></script>
-  <script src="/static/js/app_theme.js"></script>
-  <script src="/static/js/app_atendimento.js?v=20260304_03"></script>
+<div class="toast-stack" id="toastStack"></div>
+<script src="/static/js/app_toasts.js"></script>
+<script src="/static/js/app_estab_notifications.js"></script>
+<script src="/static/js/app_theme.js"></script>
+<script src="/static/js/app_atendimento.js"></script>
 </body>
 
 </html>

@@ -186,6 +186,7 @@ CREATE TABLE fila_cliente (
   data_fim_atendimento DATETIME NULL,
   data_saida DATETIME NULL,
 
+  /* mantido porque existe um update antigo no seu código usando data_fim */
   data_fim DATETIME NULL,
 
   CONSTRAINT fk_fc_fila
@@ -207,6 +208,10 @@ CREATE TABLE password_reset (
   used TINYINT(1) NOT NULL DEFAULT 0,
   created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB;
+
+/* =========================
+   ÍNDICES
+========================= */
 
 CREATE INDEX idx_cliente_status
   ON cliente (status);

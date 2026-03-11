@@ -67,6 +67,7 @@ const confirmNao = document.getElementById("confirmNao");
 
 const filaSelect = document.getElementById("filaSelect");
 const filaInfo = document.getElementById("filaInfo");
+const statusRaioAtendimentoEl = document.getElementById("statusRaioAtendimento");
 
 // ================= SIDEBAR (mobile) =================
 function openSidebar() {
@@ -295,55 +296,52 @@ function startWS(filaId) {
     }, 25000);
   };
 
-  ws.onmessage = async (e) => {
-    try {
-      const msg = JSON.parse(e.data);
-      if (msg?.type !== "fila_update") return;
+ws.onmessage = async (e) => {
+  try {
+    const msg = JSON.parse(e.data);
+    if (msg?.type !== "fila_update") return;
 
-      // ✅ só entra/sai do cliente
-      toastFromEvent(msg);
+    const action = (msg.action || "").toUpperCase();
+    const p = msg.payload || {};
+    const nome = p.nome || atualCache?.nome || "Cliente";
 
-      const action = (msg.action || "").toUpperCase();
-      const p = msg.payload || {};
-      const nome = p.nome || atualCache?.nome || "Cliente";
-
-      // cliente saiu sozinho: só atualiza
-      if (action === "CLIENTE_SAIU") {
-        await refreshAtendimento();
-        return;
-      }
-
-      // finalizado (SEM toast — só modal)
-      if (action === "ATENDIMENTO_FINALIZADO" || action === "FINALIZOU") {
-        if (canAcceptWsMode("finalizado")) {
-          openFinishOverlay({ mode: "finalizado", nome });
-          clearPending();
-        }
-        await refreshAtendimento();
-        return;
-      }
-
-      // cancelado (SEM toast — só modal)
-      if (action === "CANCELOU" || action === "ATENDIMENTO_CANCELADO") {
-        if (canAcceptWsMode("cancelado")) {
-          openFinishOverlay({ mode: "cancelado", nome });
-          clearPending();
-        }
-        await refreshAtendimento();
-        return;
-      }
-
+    // cliente saiu sozinho: só atualiza
+    if (action === "CLIENTE_SAIU") {
       await refreshAtendimento();
-    } catch {
-      // ignore
+      return;
     }
-  };
 
-  ws.onclose = () => {
-    clearInterval(wsPingTimer);
-    clearTimeout(wsRetryTimer);
-    wsRetryTimer = setTimeout(() => startWS(filaId), 2500);
-  };
+    // finalizado (SEM toast — só modal)
+    if (action === "ATENDIMENTO_FINALIZADO" || action === "FINALIZOU") {
+      if (canAcceptWsMode("finalizado")) {
+        openFinishOverlay({ mode: "finalizado", nome });
+        clearPending();
+      }
+      await refreshAtendimento();
+      return;
+    }
+
+    // cancelado (SEM toast — só modal)
+    if (action === "CANCELOU" || action === "ATENDIMENTO_CANCELADO") {
+      if (canAcceptWsMode("cancelado")) {
+        openFinishOverlay({ mode: "cancelado", nome });
+        clearPending();
+      }
+      await refreshAtendimento();
+      return;
+    }
+
+    await refreshAtendimento();
+  } catch {
+    // ignore
+  }
+};
+
+ws.onclose = () => {
+  clearInterval(wsPingTimer);
+  clearTimeout(wsRetryTimer);
+  wsRetryTimer = setTimeout(() => startWS(filaId), 2500);
+};
 }
 
 // ================= API: STATUS ATENDIMENTO =================
@@ -375,11 +373,22 @@ async function refreshAtendimento() {
     const atual = data.atual || null;
     atualCache = atual;
 
-    if (atual) {
-      if (atendendoAgoraEl) atendendoAgoraEl.textContent = atual.nome || "—";
-    } else {
-      if (atendendoAgoraEl) atendendoAgoraEl.textContent = "Nenhum cliente sendo atendido";
+      if (atual) {
+    if (atendendoAgoraEl) atendendoAgoraEl.textContent = atual.nome || "—";
+
+    if (statusRaioAtendimentoEl) {
+      const status = String(atual.status_localizacao || "").toLowerCase();
+
+      if (status === "dentro_raio" || status === "no_raio") {
+        statusRaioAtendimentoEl.textContent = "🟢 Cliente dentro do raio";
+      } else {
+        statusRaioAtendimentoEl.textContent = "🔴 Cliente fora do raio";
+      }
     }
+  } else {
+    if (atendendoAgoraEl) atendendoAgoraEl.textContent = "Nenhum cliente sendo atendido";
+    if (statusRaioAtendimentoEl) statusRaioAtendimentoEl.textContent = "—";
+  }
 
     const prox = data.proximo || null;
     proxCache = prox;

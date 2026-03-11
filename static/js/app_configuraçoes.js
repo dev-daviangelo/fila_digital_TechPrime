@@ -21,12 +21,8 @@ backdrop?.addEventListener("click", closeSidebar);
 const API_BASE = window.location.origin;
 
 // ===== Toast =====
-const toast = document.getElementById("toast");
-function showToast(msg){
-  if (!toast) return;
-  toast.textContent = msg;
-  toast.classList.add("show");
-  setTimeout(() => toast.classList.remove("show"), 1500);
+function showToast(msg, type = "info"){
+  window.showToastTop?.(type, msg, 2200);
 }
 
 // ===== Topbar nome =====
@@ -137,7 +133,7 @@ function preencherPerfil(est){
 async function carregarPerfil(){
   const estabId = Number(localStorage.getItem("estabelecimento_id") || 0);
   if (!estabId){
-    showToast("Faça login novamente.");
+    showToast("Faça login novamente.", "warning");
     window.location.href = "/templates/LoginCnpj.html";
     return;
   }
@@ -187,10 +183,10 @@ formPerfil?.addEventListener("submit", async (e) => {
     // mantém máscara no input
     if (inpTelefone) inpTelefone.value = formatBRPhone(telDigits);
 
-    showToast("Telefone atualizado!");
+    showToast("Telefone atualizado!", "success");
   } catch (err){
     console.error(err);
-    showToast(err?.message || "Erro ao salvar.");
+    showToast(err?.message || "Erro ao salvar.", "danger");
   }
 });
 
@@ -213,7 +209,7 @@ function savePrefs(){
     live: !!prefs.live?.checked,
     qr: !!prefs.qr?.checked
   }));
-  showToast("Preferências salvas!");
+  showToast("Preferências salvas!", "success");
 }
 
 Object.values(prefs).forEach((el) => el?.addEventListener("change", savePrefs));
@@ -225,7 +221,7 @@ document.getElementById("btnSair")?.addEventListener("click", () => {
   localStorage.removeItem("estabelecimento_nome");
   localStorage.removeItem("nomeEstabelecimento");
 
-  showToast("Sessão encerrada!");
+  showToast("Sessão encerrada!", "success");
   setTimeout(() => {
     window.location.href = "/templates/index.html";
   }, 800);
@@ -234,5 +230,5 @@ document.getElementById("btnSair")?.addEventListener("click", () => {
 // ===== INIT =====
 carregarPerfil().catch((e) => {
   console.error("Erro carregarPerfil:", e);
-  showToast(e.message || "Erro ao carregar perfil.");
+  showToast(e.message || "Erro ao carregar perfil.", "danger");
 });

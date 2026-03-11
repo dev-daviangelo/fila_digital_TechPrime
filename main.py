@@ -1,3 +1,6 @@
+# main.py (COMPLETA E ATUALIZADA) — CORRIGIDA SEM MUDAR O QUE NÃO PRECISA
+# ✅ Correção principal: Atendimento agora considera CHAMADO + AGUARDANDO (compatível com Dashboard)
+# ✅ Mantém tudo que você já implementou
 
 from fastapi import FastAPI, HTTPException, Query, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
@@ -1969,13 +1972,16 @@ def _fila_get_status(conn, fila_id: int):
         raise HTTPException(status_code=404, detail="Fila não encontrada")
 
     cur.execute("""
-        SELECT fc.idFilaCliente, c.nome
-        FROM fila_cliente fc
-        JOIN cliente c ON c.idCliente = fc.cliente_idCliente
-        WHERE fc.fila_idFila = %s AND fc.status = 'EM_ATENDIMENTO'
-        ORDER BY fc.data_entrada ASC, fc.idFilaCliente ASC
-        LIMIT 1
-    """, (fila_id,))
+    SELECT
+        fc.idFilaCliente,
+        c.nome,
+        fc.status_localizacao
+    FROM fila_cliente fc
+    JOIN cliente c ON c.idCliente = fc.cliente_idCliente
+    WHERE fc.fila_idFila = %s AND fc.status = 'EM_ATENDIMENTO'
+    ORDER BY fc.data_entrada ASC, fc.idFilaCliente ASC
+    LIMIT 1
+""", (fila_id,))
     atual = cur.fetchone()
 
     # ✅✅ CORRIGIDO: total considera CHAMADO + AGUARDANDO (compatível com Dashboard)
@@ -2012,9 +2018,13 @@ def _fila_get_status(conn, fila_id: int):
         }
 
     atual_obj = None
+
     if atual:
-        atual_obj = {"fila_cliente_id": int(
-            atual["idFilaCliente"]), "nome": atual["nome"]}
+        atual_obj = {
+            "fila_cliente_id": int(atual["idFilaCliente"]),
+            "nome": atual["nome"],
+            "status_localizacao": atual.get("status_localizacao")
+        }
 
     return {
         "fila_id": int(fila["idFila"]),
@@ -2325,11 +2335,17 @@ def dashboard_resumo(estabelecimento_id: int = Query(...)):
                  AND fc6.status = 'SAIU'
                  AND fc6.data_inicio_atendimento IS NOT NULL
               ) AS cancelados
-        """, (estabelecimento_id, estabelecimento_id, estabelecimento_id, estabelecimento_id, estabelecimento_id))
+        """, (
+            estabelecimento_id,
+            estabelecimento_id,
+            estabelecimento_id,
+            estabelecimento_id,
+            estabelecimento_id
+        ))
 
         totais = cur.fetchone() or {}
 
-        # ✅ Próximo (ABERTAS) - mantido
+        # ✅ Próximo (ABERTAS)
         cur.execute("""
             SELECT
               fc.idFilaCliente,
@@ -2349,23 +2365,44 @@ def dashboard_resumo(estabelecimento_id: int = Query(...)):
         """, (estabelecimento_id,))
         prox = cur.fetchone()
 
+        # ✅ Tempo médio geral das filas abertas do estabelecimento
+        cur.execute("""
+            SELECT idFila
+            FROM fila
+            WHERE estabelecimento_idEstabelecimento = %s
+              AND status = 'ABERTA'
+        """, (estabelecimento_id,))
+        filas_abertas = cur.fetchall() or []
+
+        tempos_medios = []
+        for fila_item in filas_abertas:
+            fila_id = int(fila_item["idFila"])
+            tempo_fila = calcular_tempo_medio_fila_min(conn, fila_id, padrao=12)
+
+            if tempo_fila is not None and tempo_fila > 0:
+                tempos_medios.append(float(tempo_fila))
+
+        if tempos_medios:
+            tempo_medio_geral = round(sum(tempos_medios) / len(tempos_medios))
+        else:
+            tempo_medio_geral = 12
+
         cur.close()
         conn.close()
 
         return {
             "ok": True,
-            "estabelecimento": {"id": est["idEstabelecimento"], "nome": est["nome"]},
+            "estabelecimento": {
+                "id": est["idEstabelecimento"],
+                "nome": est["nome"]
+            },
             "totais": {
                 "na_fila": int(totais.get("na_fila") or 0),
                 "atendendo": int(totais.get("atendendo") or 0),
                 "chamados": int(totais.get("chamados") or 0),
-
-                # ✅ agora o front vai preencher automaticamente
                 "cancelados": int(totais.get("cancelados") or 0),
                 "concluidos": int(totais.get("concluidos") or 0),
-
-                # (se quiser depois eu faço o tempo médio real)
-                "tempo_medio_min": 12,
+                "tempo_medio_min": int(tempo_medio_geral),
                 "no_raio": 0,
             },
             "proximo": (None if not prox else {

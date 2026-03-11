@@ -9,7 +9,6 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <script src="/static/js/app_toasts.js?v=1"></script>
   <link rel="stylesheet" href="/static/css/style_theme.css">
   <!-- Icons -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
@@ -91,7 +90,7 @@
 
           <div class="conn-pill" id="connPill">
             <i class="bi bi-wifi"></i>
-            <span id="connText">Conexão: LocalStorage</span>
+            <span id="connText">Conexão: API</span>
           </div>
         </div>
 
@@ -133,9 +132,13 @@
     </main>
   </div>
 
-<script src="/static/js/app_theme.js"></script>
+
 <div class="toast-stack" id="toastStack"></div>
-<!-- troque o v= para QUALQUER valor novo -->
-<script src="/static/js/app_fila_ao_vivo.js?v=20260304_1" defer></script>
+
+<script src="/static/js/app_toasts.js"></script>
+<script src="/static/js/app_estab_notifications.js"></script>
+<script src="/static/js/app_theme.js"></script>
+<script src="/static/js/app_fila_ao_vivo.js" defer></script>
+
 </body>
 </html>

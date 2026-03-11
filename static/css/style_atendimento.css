@@ -28,6 +28,13 @@ body{
   min-height:100vh;
 }
 
+.now-location-status{
+  margin-top: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  opacity: .95;
+}
+
 /* ===== Sidebar ===== */
 .sidebar{
   background:linear-gradient(180deg, #0e0f12 0%, #0a0b0d 100%);

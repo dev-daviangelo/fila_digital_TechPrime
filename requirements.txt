@@ -5,6 +5,8 @@ mysql-connector-python
 pydantic[email]
 python-dotenv
 requests
+flask
+flask-cors
 uvicorn[standard]
 websockets
 

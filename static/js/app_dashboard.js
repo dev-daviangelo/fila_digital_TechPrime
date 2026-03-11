@@ -117,26 +117,6 @@ function syncWS(filaIds){
         // mantém atualização
         atualizarDashboard(false).catch(()=>{});
 
-        // ✅ TOASTS APENAS: cliente entrou / saiu
-        const a = String(msg.action || "").toUpperCase();
-        const p = msg.payload || {};
-
-        if (a === "CLIENTE_ENTROU"){
-          const nome = p.nome || "Cliente";
-          const filaNome = p.fila_nome || p.filaNome || "Fila";
-          window.showToastTop?.(
-            "success",
-            `<b>${nome}</b> entrou na fila: <b>${filaNome}</b>.`
-          );
-        } else if (a === "CLIENTE_SAIU"){
-          const nome = p.nome || "Cliente";
-          const filaNome = p.fila_nome || p.filaNome || "Fila";
-          window.showToastTop?.(
-            "danger",
-            `<b>${nome}</b> saiu da fila: <b>${filaNome}</b>.`
-          );
-        }
-
       } catch {}
     };
 
