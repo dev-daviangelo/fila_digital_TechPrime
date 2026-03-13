@@ -108,12 +108,10 @@ form.addEventListener("submit", async (e) => {
     }
 
     // ================= ✅ SALVAR SESSÃO (IMPORTANTE) =================
-    // Esses 3 salvamentos garantem que o cliente reconheça no WS quando for
-    // FINALIZADO/CANCELADO, e consiga mostrar o modal corretamente.
     localStorage.setItem(`cliente_session_${filaId}`, String(data.cliente_id || 0));
-    localStorage.setItem(`fila_cliente_id_${filaId}`, String(data.fila_cliente_id || 0)); // ✅ NOVO
+    localStorage.setItem(`fila_cliente_id_${filaId}`, String(data.fila_cliente_id || 0));
     localStorage.setItem("CLIENTE_NOME", nome);
-    localStorage.setItem(`cliente_nome_${filaId}`, nome); // ✅ NOVO (fallback)
+    localStorage.setItem(`cliente_nome_${filaId}`, nome);
 
     // ✅ usa posição real do backend
     abrirSucesso(nome, data.posicao);
@@ -138,21 +136,74 @@ document.getElementById("editNameBtn")?.addEventListener("click", () => {
 
 (function fixBtnOrangeTextColor(){
   function apply(){
-    const ids = ["btnClient", "btnAcompanhar"]; // coloca aqui outros IDs se tiver
+    const ids = ["btnClient", "btnAcompanhar"];
     ids.forEach(id => {
       const el = document.getElementById(id);
       if (!el) return;
       el.style.setProperty("color", "#0b0c0e", "important");
-      // se tiver ícone/span dentro, garante também
       el.querySelectorAll("*").forEach(ch => {
         ch.style.setProperty("color", "#0b0c0e", "important");
       });
     });
   }
 
-  // roda agora e depois (caso o modal seja inserido depois via JS)
   apply();
   document.addEventListener("DOMContentLoaded", apply);
   setTimeout(apply, 50);
   setTimeout(apply, 300);
 })();
+
+// ================= TOOLTIP =================
+function initHelpTooltip() {
+  const helpWrap = document.getElementById("helpWrap");
+  const helpBtn = document.getElementById("helpBtn");
+  const helpTip = document.getElementById("helpTip");
+
+  if (!helpWrap || !helpBtn || !helpTip) return;
+
+  if (helpWrap.dataset.tooltipReady === "1") return;
+  helpWrap.dataset.tooltipReady = "1";
+
+  function closeHelp() {
+    helpWrap.classList.remove("open");
+    helpBtn.setAttribute("aria-expanded", "false");
+    helpTip.setAttribute("aria-hidden", "true");
+  }
+
+  function openHelp() {
+    helpWrap.classList.add("open");
+    helpBtn.setAttribute("aria-expanded", "true");
+    helpTip.setAttribute("aria-hidden", "false");
+  }
+
+  helpBtn.addEventListener("click", (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    const isOpen = helpWrap.classList.contains("open");
+
+    if (isOpen) {
+      closeHelp();
+    } else {
+      openHelp();
+    }
+  });
+
+  document.addEventListener("click", (e) => {
+    if (!helpWrap.contains(e.target)) {
+      closeHelp();
+    }
+  });
+
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") {
+      closeHelp();
+    }
+  });
+}
+
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", initHelpTooltip);
+} else {
+  initHelpTooltip();
+}

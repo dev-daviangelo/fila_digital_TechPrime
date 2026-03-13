@@ -277,3 +277,25 @@ btnBiz?.addEventListener("click", async () => {
     bizError.textContent = e.message;
   }
 });
+
+// ================= MOSTRAR / OCULTAR SENHA =================
+(function initPasswordToggles() {
+  function bindToggle(buttonId, inputId) {
+    const btn = document.getElementById(buttonId);
+    const input = document.getElementById(inputId);
+
+    if (!btn || !input) return;
+
+    btn.addEventListener("click", function (e) {
+      e.preventDefault();
+      e.stopPropagation();
+
+      const mostrando = input.type === "text";
+      input.type = mostrando ? "password" : "text";
+      btn.setAttribute("aria-label", mostrando ? "Mostrar senha" : "Ocultar senha");
+    });
+  }
+
+  bindToggle("togglePass", "bizPass");
+  bindToggle("toggleSignupPass", "signupBizPass");
+})();

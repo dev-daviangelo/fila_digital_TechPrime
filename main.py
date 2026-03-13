@@ -1294,19 +1294,44 @@ async def fechar_fila(fila_id: int):
             raise HTTPException(status_code=404, detail="Fila não encontrada")
 
         cur2 = conn.cursor()
+
+        # fecha a fila
         cur2.execute("""
             UPDATE fila
             SET status='FECHADA', data_fechamento=%s
             WHERE idFila=%s
         """, (datetime.now(), fila_id))
+
+        # remove todos os clientes ainda ativos nela
+        try:
+            cur2.execute("""
+                UPDATE fila_cliente
+                SET status='SAIU',
+                    data_fim=NOW()
+                WHERE fila_idFila=%s
+                  AND status IN ('AGUARDANDO','CHAMADO','EM_ATENDIMENTO')
+            """, (fila_id,))
+        except Exception:
+            cur2.execute("""
+                UPDATE fila_cliente
+                SET status='SAIU'
+                WHERE fila_idFila=%s
+                  AND status IN ('AGUARDANDO','CHAMADO','EM_ATENDIMENTO')
+            """, (fila_id,))
+
         conn.commit()
 
         cur2.close()
         cur.close()
         conn.close()
 
-        await notify_fila_update(fila_id, "FILA_FECHADA", {"fila_id": fila_id})
+        await notify_fila_update(fila_id, "FILA_FECHADA", {
+            "fila_id": fila_id,
+            "motivo": "fila_fechada"
+        })
+
         return {"ok": True, "status": "FECHADA"}
+
     except HTTPException:
         raise
     except Exception as e:
@@ -1330,19 +1355,44 @@ async def excluir_fila(fila_id: int):
             raise HTTPException(status_code=404, detail="Fila não encontrada")
 
         cur2 = conn.cursor()
+
+        # exclui logicamente a fila
         cur2.execute("""
             UPDATE fila
             SET status='EXCLUIDA', data_fechamento=%s
             WHERE idFila=%s
         """, (datetime.now(), fila_id))
+
+        # remove todos os clientes ainda ativos nela
+        try:
+            cur2.execute("""
+                UPDATE fila_cliente
+                SET status='SAIU',
+                    data_fim=NOW()
+                WHERE fila_idFila=%s
+                  AND status IN ('AGUARDANDO','CHAMADO','EM_ATENDIMENTO')
+            """, (fila_id,))
+        except Exception:
+            cur2.execute("""
+                UPDATE fila_cliente
+                SET status='SAIU'
+                WHERE fila_idFila=%s
+                  AND status IN ('AGUARDANDO','CHAMADO','EM_ATENDIMENTO')
+            """, (fila_id,))
+
         conn.commit()
 
         cur2.close()
         cur.close()
         conn.close()
 
-        await notify_fila_update(fila_id, "FILA_EXCLUIDA", {"fila_id": fila_id})
+        await notify_fila_update(fila_id, "FILA_EXCLUIDA", {
+            "fila_id": fila_id,
+            "motivo": "fila_excluida"
+        })
+
         return {"ok": True, "status": "EXCLUIDA"}
+
     except HTTPException:
         raise
     except Exception as e:
@@ -1762,6 +1812,42 @@ async def status_cliente_fila(fila_id: int, cliente_id: int):
         conn = get_conn()
         cur = conn.cursor(dictionary=True)
 
+        # 1) verifica a fila primeiro
+        cur.execute("""
+            SELECT idFila, status, nome, raio_km
+            FROM fila
+            WHERE idFila = %s
+            LIMIT 1
+        """, (fila_id,))
+        fila_info = cur.fetchone()
+
+        if not fila_info:
+            cur.close()
+            conn.close()
+            return {
+                "encerrado": True,
+                "motivo": "fila_excluida"
+            }
+
+        fila_status = (fila_info.get("status") or "").upper()
+
+        if fila_status == "FECHADA":
+            cur.close()
+            conn.close()
+            return {
+                "encerrado": True,
+                "motivo": "fila_fechada"
+            }
+
+        if fila_status == "EXCLUIDA":
+            cur.close()
+            conn.close()
+            return {
+                "encerrado": True,
+                "motivo": "fila_excluida"
+            }
+
+        # 2) se a fila estiver ativa, procura o cliente nela
         cur.execute("""
             SELECT
                 fc.idFilaCliente,
@@ -1786,7 +1872,8 @@ async def status_cliente_fila(fila_id: int, cliente_id: int):
             cur.close()
             conn.close()
             return {
-                "encerrado": True
+                "encerrado": True,
+                "motivo": "cancelado"
             }
 
         fila_cliente_id = int(row["idFilaCliente"])
@@ -1971,54 +2058,53 @@ def _fila_get_status(conn, fila_id: int):
         cur.close()
         raise HTTPException(status_code=404, detail="Fila não encontrada")
 
+    # Cliente em atendimento agora
     cur.execute("""
-    SELECT
-        fc.idFilaCliente,
-        c.nome,
-        fc.status_localizacao
-    FROM fila_cliente fc
-    JOIN cliente c ON c.idCliente = fc.cliente_idCliente
-    WHERE fc.fila_idFila = %s AND fc.status = 'EM_ATENDIMENTO'
-    ORDER BY fc.data_entrada ASC, fc.idFilaCliente ASC
-    LIMIT 1
-""", (fila_id,))
+        SELECT
+            fc.idFilaCliente,
+            c.nome,
+            fc.status_localizacao
+        FROM fila_cliente fc
+        JOIN cliente c ON c.idCliente = fc.cliente_idCliente
+        WHERE fc.fila_idFila = %s
+          AND fc.status = 'EM_ATENDIMENTO'
+        ORDER BY fc.data_entrada ASC, fc.idFilaCliente ASC
+        LIMIT 1
+    """, (fila_id,))
     atual = cur.fetchone()
 
-    # ✅✅ CORRIGIDO: total considera CHAMADO + AGUARDANDO (compatível com Dashboard)
+    # Total aguardando/chamado
     cur.execute("""
         SELECT COUNT(*) AS total
         FROM fila_cliente
-        WHERE fila_idFila = %s AND status IN ('AGUARDANDO','CHAMADO')
+        WHERE fila_idFila = %s
+          AND status IN ('AGUARDANDO','CHAMADO')
     """, (fila_id,))
     aguardando_total = int((cur.fetchone() or {}).get("total", 0))
 
-    # ✅✅ CORRIGIDO: "próximo" prioriza CHAMADO e depois AGUARDANDO
+    # Lista completa da espera:
+    # 1º = próximo
+    # resto = demais clientes
     cur.execute("""
-        SELECT fc.idFilaCliente, c.nome, fc.status
+        SELECT
+            fc.idFilaCliente,
+            c.nome,
+            fc.status,
+            fc.status_localizacao
         FROM fila_cliente fc
         JOIN cliente c ON c.idCliente = fc.cliente_idCliente
-        WHERE fc.fila_idFila = %s AND fc.status IN ('CHAMADO','AGUARDANDO')
+        WHERE fc.fila_idFila = %s
+          AND fc.status IN ('CHAMADO','AGUARDANDO')
         ORDER BY
           CASE fc.status WHEN 'CHAMADO' THEN 0 ELSE 1 END,
           fc.data_entrada ASC,
           fc.idFilaCliente ASC
-        LIMIT 1
     """, (fila_id,))
-    proximo = cur.fetchone()
+    fila_espera = cur.fetchall() or []
 
     cur.close()
 
-    prox_obj = None
-    if proximo:
-        prox_obj = {
-            "fila_cliente_id": int(proximo["idFilaCliente"]),
-            "nome": proximo["nome"],
-            "posicao": 1,
-            "status": (proximo.get("status") or "AGUARDANDO")
-        }
-
     atual_obj = None
-
     if atual:
         atual_obj = {
             "fila_cliente_id": int(atual["idFilaCliente"]),
@@ -2026,15 +2112,38 @@ def _fila_get_status(conn, fila_id: int):
             "status_localizacao": atual.get("status_localizacao")
         }
 
+    prox_obj = None
+    demais_obj = []
+
+    if fila_espera:
+        primeiro = fila_espera[0]
+
+        prox_obj = {
+            "fila_cliente_id": int(primeiro["idFilaCliente"]),
+            "nome": primeiro["nome"],
+            "posicao": 1,
+            "status": (primeiro.get("status") or "AGUARDANDO"),
+            "status_localizacao": primeiro.get("status_localizacao")
+        }
+
+        for idx, item in enumerate(fila_espera[1:], start=2):
+            demais_obj.append({
+                "fila_cliente_id": int(item["idFilaCliente"]),
+                "nome": item["nome"],
+                "posicao": idx,
+                "status": (item.get("status") or "AGUARDANDO"),
+                "status_localizacao": item.get("status_localizacao")
+            })
+
     return {
         "fila_id": int(fila["idFila"]),
         "fila_status": (fila.get("status") or "").upper(),
         "aguardando_total": aguardando_total,
         "tempo_medio_min": calcular_tempo_medio_fila_min(conn, fila_id, padrao=12),
         "atual": atual_obj,
-        "proximo": prox_obj
+        "proximo": prox_obj,
+        "demais_na_fila": demais_obj
     }
-
 
 @app.get("/api/filas/{fila_id}/atendimento/status")
 def atendimento_status(fila_id: int):

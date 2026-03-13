@@ -39,6 +39,7 @@ const atendendoAgoraEl = document.getElementById("atendendoAgora");
 const proxNomeEl = document.getElementById("proxNome");
 const proxPosEl = document.getElementById("proxPosicao");
 const proxBadgeEl = document.getElementById("proxBadge");
+const demaisFilaListaEl = document.getElementById("demaisFilaLista");
 const tempoMedioEl = document.getElementById("tempoMedio");
 
 const btnChamar = document.getElementById("btnChamar");

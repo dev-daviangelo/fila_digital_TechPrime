@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>ANDA LOGO</title>
-  <link rel="stylesheet" href="/static/css/style_LoginCnpj.css">
+  <link rel="stylesheet" href="/static/css/style_LoginCnpj.css?v=20">
 </head>
 <body>
 
@@ -18,7 +18,6 @@
 
       <form class="form" id="form" novalidate>
 
-        <!-- ===== CLIENTE (ÚNICO) ===== -->
         <div class="mode" id="modeClient">
 
           <p class="subtitle">Digite seu nome e entre na fila em segundos.</p>
@@ -46,18 +45,6 @@
 
           <button type="submit" class="btn" id="btnClient">Entrar na fila</button>
 
-          <!-- Tooltip "Como funciona?" -->
-          <div class="helpWrap" id="helpWrap">
-            <button type="button" class="help" id="helpBtn" aria-expanded="false">
-              <span class="helpIcon" aria-hidden="true">?</span>
-              Como funciona a fila?
-            </button>
-
-            <div class="tooltip" id="helpTip" role="tooltip" aria-hidden="true">
-              Digite seu nome para garantir sua posição na fila. Você será notificado quando chegar sua vez!
-            </div>
-          </div>
-
         </div>
 
       </form>
@@ -65,7 +52,6 @@
     </section>
   </main>
 
-  <!-- OVERLAY + SUCESSO -->
   <div class="overlay" id="overlay" aria-hidden="true">
     <div class="success" role="dialog" aria-modal="true" aria-label="Sucesso">
       <div class="iconRing" aria-hidden="true">
@@ -87,7 +73,7 @@
       <p class="successName" id="successName">Seu Nome</p>
 
       <div class="successActions">
-        <button class="successBtn" type="button">Acompanhar fila</button>
+        <button class="successBtn" id="btnAcompanhar" type="button">Acompanhar fila</button>
       </div>
     </div>
   </div>
@@ -100,10 +86,7 @@
     <span class="footerCopy">© 2026</span>
   </footer>
 
-  <!-- (opcional mas recomendado) base única para localhost/ngrok -->
-  <script src="/static/js/config.js"></script>
-
-  <!-- Seu JS -->
-  <script src="/static/js/app_login_cliente.js"></script>
+  <script src="/static/js/config.js?v=10"></script>
+  <script src="/static/js/app_login_cliente.js?v=10"></script>
 </body>
 </html>

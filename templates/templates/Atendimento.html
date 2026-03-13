@@ -93,7 +93,6 @@
               </div>
             </div>
 
-            <!-- Seletor de fila -->
             <div class="field" style="margin:0 4px 14px">
               <div class="label-row">
                 <label style="font-size:12px;color:rgba(255,255,255,.8);font-weight:700">Fila</label>
@@ -130,6 +129,7 @@
             <div class="now-box">
               <div class="now-title">Atendendo agora</div>
               <div class="now-text" id="atendendoAgora">Nenhum cliente sendo atendido</div>
+              <div class="now-location-status" id="statusRaioAtendimento">—</div>
             </div>
 
             <div class="next-box">
@@ -138,42 +138,58 @@
                   <div class="next-title">Próximo da fila</div>
                   <div class="next-name" id="proxNome">—</div>
                   <div class="next-sub" id="proxPosicao">—</div>
+                  <div class="now-location-status" id="statusRaioProximo">—</div>
                 </div>
                 <span class="badge badge-wait" id="proxBadge">—</span>
               </div>
             </div>
           </div>
 
-          <!-- RIGHT: Ações -->
-          <div class="panel">
-            <div class="panel-head">
-              <div class="panel-title">
-                <span class="panel-ico"><i class="bi bi-clock"></i></span>
-                <h3>Ações</h3>
+          <!-- RIGHT COLUMN -->
+          <div class="right-column">
+            <div class="panel">
+              <div class="panel-head">
+                <div class="panel-title">
+                  <span class="panel-ico"><i class="bi bi-clock"></i></span>
+                  <h3>Ações</h3>
+                </div>
+              </div>
+
+              <div class="actions">
+                <button class="btn btn-primary btn-big" id="btnChamar" type="button">
+                  <i class="bi bi-play-fill"></i>
+                  Chamar próximo
+                </button>
+
+                <div class="actions-row">
+                  <button class="btn btn-ghost" id="btnFinalizar" type="button">
+                    <i class="bi bi-check-circle"></i>
+                    Finalizar
+                  </button>
+                  <button class="btn btn-ghost" id="btnCancelar" type="button">
+                    <i class="bi bi-x-circle"></i>
+                    Cancelar
+                  </button>
+                </div>
+
+                <button class="btn btn-ghost btn-wide" id="btnPular" type="button">
+                  <i class="bi bi-skip-forward"></i>
+                  Pular cliente
+                </button>
               </div>
             </div>
 
-            <div class="actions">
-              <button class="btn btn-primary btn-big" id="btnChamar" type="button">
-                <i class="bi bi-play-fill"></i>
-                Chamar próximo
-              </button>
-
-              <div class="actions-row">
-                <button class="btn btn-ghost" id="btnFinalizar" type="button">
-                  <i class="bi bi-check-circle"></i>
-                  Finalizar
-                </button>
-                <button class="btn btn-ghost" id="btnCancelar" type="button">
-                  <i class="bi bi-x-circle"></i>
-                  Cancelar
-                </button>
+            <div class="panel">
+              <div class="panel-head">
+                <div class="panel-title">
+                  <span class="panel-ico"><i class="bi bi-list-ul"></i></span>
+                  <h3>Demais na fila</h3>
+                </div>
               </div>
 
-              <button class="btn btn-ghost btn-wide" id="btnPular" type="button">
-                <i class="bi bi-skip-forward"></i>
-                Pular cliente
-              </button>
+              <div class="right-queue-list" id="demaisFilaLista">
+                <div class="queue-empty">Nenhum outro cliente aguardando</div>
+              </div>
             </div>
           </div>
         </div>

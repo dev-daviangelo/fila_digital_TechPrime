@@ -216,8 +216,21 @@ function showEncerradoModal({ mode="finalizado", nome="" } = {}){
   const pill = document.getElementById("finalPill");
 
   const clienteNome = nome || getClienteNome(filaId) || "Cliente";
+  const modo = String(mode || "").toLowerCase().trim();
 
-  if (mode === "cancelado") {
+  if (modo === "fila_fechada") {
+    title.textContent = "Fila fechada";
+    sub.innerHTML =
+      `Esta fila foi fechada pelo estabelecimento.<br><br>` +
+      `Você saiu da fila automaticamente.`;
+    pill.textContent = `Cliente: ${clienteNome}`;
+  } else if (modo === "fila_excluida") {
+    title.textContent = "Fila excluída";
+    sub.innerHTML =
+      `Esta fila foi excluída pelo estabelecimento.<br><br>` +
+      `Você saiu da fila automaticamente.`;
+    pill.textContent = `Cliente: ${clienteNome}`;
+  } else if (modo === "cancelado") {
     title.textContent = "Atendimento cancelado!";
     sub.innerHTML =
       `Você foi removido da fila.<br><br>` +
@@ -249,6 +262,13 @@ function encerrarETravar(mode, nome){
   clearInterval(wsPingTimer);
   clearTimeout(wsRetryTimer);
   clearInterval(fallbackTimer);
+
+  // auto saída para fila fechada/excluída
+  if (mode === "fila_fechada" || mode === "fila_excluida") {
+    setTimeout(() => {
+      forceExitToSaiu();
+    }, 2500);
+  }
 }
 
 // ✅ Sai para saiu.html e limpa APENAS as chaves da fila/cliente atual
@@ -349,6 +369,32 @@ async function atualizarStatus({ silent=false } = {}) {
 
 // ✅ backend pode retornar encerrado=true
 if (data && data.encerrado === true) {
+  const motivo = String(data.motivo || "").toLowerCase().trim();
+
+  if (motivo === "fila_fechada") {
+    encerramentoModo = "fila_fechada";
+    encerrarETravar("fila_fechada", getClienteNome(filaId));
+    return;
+  }
+
+  if (motivo === "fila_excluida") {
+    encerramentoModo = "fila_excluida";
+    encerrarETravar("fila_excluida", getClienteNome(filaId));
+    return;
+  }
+
+  if (motivo === "cancelado") {
+    encerramentoModo = "cancelado";
+    encerrarETravar("cancelado", getClienteNome(filaId));
+    return;
+  }
+
+  if (motivo === "finalizado") {
+    encerramentoModo = "finalizado";
+    encerrarETravar("finalizado", getClienteNome(filaId));
+    return;
+  }
+
   const modo = encerramentoModo || (ultimoStatusConhecido === "em_atendimento" ? "finalizado" : "cancelado");
   encerrarETravar(modo, getClienteNome(filaId));
   return;
@@ -696,6 +742,18 @@ function startWebSocket() {
       if ((action === "ATENDIMENTO_CANCELADO" || action === "CANCELOU") && ehMeu) {
         encerramentoModo = "cancelado";
         encerrarETravar("cancelado", getClienteNome(filaId));
+        return;
+      }
+
+      if (action === "FILA_FECHADA") {
+        encerramentoModo = "fila_fechada";
+        encerrarETravar("fila_fechada", getClienteNome(filaId));
+        return;
+      }
+
+      if (action === "FILA_EXCLUIDA") {
+        encerramentoModo = "fila_excluida";
+        encerrarETravar("fila_excluida", getClienteNome(filaId));
         return;
       }
 

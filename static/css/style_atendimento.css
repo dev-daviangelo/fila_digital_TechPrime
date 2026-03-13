@@ -162,11 +162,89 @@ h1{margin:8px 0 4px;font-size:34px;letter-spacing:-.6px}
 /* ===== Atendimento grid ===== */
 .grid-att{
   display:grid;
-  grid-template-columns: 1fr 1fr;
-  gap:14px;
+  grid-template-columns: minmax(0, 1fr) 380px;
+  gap:18px;
   align-items:start;
 }
 
+.right-column{
+  display:flex;
+  flex-direction:column;
+  gap:18px;
+  min-width:0;
+}
+
+.panel{
+  min-width:0;
+}
+
+.right-queue-list{
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+  max-height:420px;
+  overflow:auto;
+  padding-right:4px;
+}
+
+.queue-item{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  padding:14px 16px;
+  border-radius:14px;
+  border:1px solid rgba(255,255,255,.07);
+  background:rgba(255,255,255,.03);
+}
+
+.queue-item-left{
+  min-width:0;
+}
+
+.queue-item-name{
+  font-size:20px;
+  font-weight:800;
+  color:#fff;
+  line-height:1.1;
+}
+
+.queue-item-sub{
+  margin-top:6px;
+  font-size:14px;
+  color:rgba(255,255,255,.68);
+}
+
+.queue-item-status{
+  margin-top:10px;
+  font-size:14px;
+  font-weight:700;
+  opacity:.96;
+}
+
+.queue-empty{
+  font-size:14px;
+  color:rgba(255,255,255,.55);
+  padding:8px 2px;
+}
+
+.queue-item.in-radius{
+  border:1px solid rgba(34,197,94,.35);
+  background:rgba(34,197,94,.10);
+}
+
+.queue-item.out-radius{
+  border:1px solid rgba(239,68,68,.28);
+  background:rgba(239,68,68,.08);
+}
+
+.queue-item-status.in-radius{
+  color:#86efac;
+}
+
+.queue-item-status.out-radius{
+  color:#fca5a5;
+}
 /* Panels */
 .panel{
   border-radius:16px;
@@ -174,6 +252,7 @@ h1{margin:8px 0 4px;font-size:34px;letter-spacing:-.6px}
   border:1px solid rgba(255,255,255,.08);
   box-shadow:0 12px 30px rgba(0,0,0,.35);
   padding:16px;
+  min-width:0;
 }
 .panel-head{
   padding:4px 4px 12px;
@@ -235,6 +314,69 @@ h1{margin:8px 0 4px;font-size:34px;letter-spacing:-.6px}
   padding:14px;
   border:1px solid rgba(255,255,255,.07);
   background:rgba(0,0,0,.10);
+}
+.queue-list-box{
+  margin-top:14px;
+  border-radius:14px;
+  padding:14px;
+  border:1px solid rgba(255,255,255,.07);
+  background:rgba(0,0,0,.10);
+}
+
+.queue-list-title{
+  font-size:12px;
+  color:rgba(255,255,255,.70);
+  font-weight:800;
+  margin-bottom:12px;
+}
+
+.queue-list{
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+  max-height:260px;
+  overflow:auto;
+  padding-right:4px;
+}
+
+.queue-item{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  padding:12px 14px;
+  border-radius:12px;
+  border:1px solid rgba(255,255,255,.07);
+  background:rgba(255,255,255,.03);
+}
+
+.queue-item-left{
+  min-width:0;
+}
+
+.queue-item-name{
+  font-size:14px;
+  font-weight:800;
+  color:#fff;
+}
+
+.queue-item-sub{
+  margin-top:4px;
+  font-size:12px;
+  color:rgba(255,255,255,.55);
+}
+
+.queue-item-status{
+  margin-top:6px;
+  font-size:13px;
+  font-weight:600;
+  opacity:.95;
+}
+
+.queue-empty{
+  font-size:13px;
+  color:rgba(255,255,255,.55);
+  padding:6px 2px;
 }
 .next-top{
   display:flex;
@@ -1726,4 +1868,77 @@ select option[disabled]{
 
   background: rgba(0,0,0,.18) !important;
   border: 1px solid rgba(255,255,255,.08) !important;
+}
+.right-column{
+  display:flex;
+  flex-direction:column;
+  gap:18px;
+}
+
+.right-queue-list{
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+  max-height:420px;
+  overflow:auto;
+  padding-right:4px;
+}
+
+.queue-item{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  padding:14px 16px;
+  border-radius:14px;
+  border:1px solid rgba(255,255,255,.07);
+  background:rgba(255,255,255,.03);
+}
+
+.queue-item-left{
+  min-width:0;
+}
+
+.queue-item-name{
+  font-size:20px;
+  font-weight:800;
+  color:#fff;
+  line-height:1.1;
+}
+
+.queue-item-sub{
+  margin-top:6px;
+  font-size:14px;
+  color:rgba(255,255,255,.68);
+}
+
+.queue-item-status{
+  margin-top:10px;
+  font-size:14px;
+  font-weight:700;
+  opacity:.96;
+}
+
+.queue-empty{
+  font-size:14px;
+  color:rgba(255,255,255,.55);
+  padding:8px 2px;
+}
+
+.queue-item.in-radius{
+  border:1px solid rgba(34,197,94,.35);
+  background:rgba(34,197,94,.10);
+}
+
+.queue-item.out-radius{
+  border:1px solid rgba(239,68,68,.28);
+  background:rgba(239,68,68,.08);
+}
+
+.queue-item-status.in-radius{
+  color:#86efac;
+}
+
+.queue-item-status.out-radius{
+  color:#fca5a5;
 }
