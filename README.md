@@ -401,12 +401,9 @@ python -m venv .venv
 No mesmo terminal onde a venv está ativa:
 
 ```cmd
-pip install fastapi uvicorn mysql-connector-python pydantic python-dotenv
+pip install fastapi uvicorn mysql-connector-python "pydantic[email]" python-dotenv requests "uvicorn[standard]" websockets
 ```
 
-```cmd
-pip install "pydantic[email]"
-```
 
 ---
 
