@@ -24,10 +24,10 @@ Abra o terminal na pasta onde deseja salvar o projeto:
 ```powershell
 # Clonar o repositório
 cd Downloads;
-git clone https://github.com/Gabriel-Oliveira-Duarte/fila_digital_TechPrime-gabriel
+git clone https://github.com/dev-daviangelo/fila_digital_TechPrime
 
 # Entrar na pasta do projeto (onde está o main.py)
-cd fila_digital_TechPrime-gabriel
+cd fila_digital_TechPrime
 
 
 ```
@@ -37,7 +37,7 @@ cd fila_digital_TechPrime-gabriel
 Apenas extraia o arquivo e entre na pasta do projeto:
 
 ```powershell
-cd fila_digital_TechPrime-gabriel
+cd fila_digital_TechPrime
 ```
 
 ---
