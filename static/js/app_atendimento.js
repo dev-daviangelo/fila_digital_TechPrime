@@ -42,6 +42,8 @@ const atendendoAgoraEl = document.getElementById("atendendoAgora");
 const proxNomeEl = document.getElementById("proxNome");
 const proxPosEl = document.getElementById("proxPosicao");
 const proxBadgeEl = document.getElementById("proxBadge");
+const statusRaioProximoEl = document.getElementById("statusRaioProximo");
+const demaisFilaListaEl = document.getElementById("demaisFilaLista");
 const tempoMedioEl = document.getElementById("tempoMedio");
 
 const btnChamar = document.getElementById("btnChamar");
@@ -124,10 +126,23 @@ function showCallModalCliente({ nome="—", posicao=1, titulo="Chamando cliente"
 function openFinishOverlay({ mode="finalizado", nome="Cliente" } = {}) {
   if (!finishOverlay) return;
 
-  if (mode === "cancelado") {
+  const modo = String(mode || "").toLowerCase().trim();
+
+  if (modo === "fila_fechada") {
+    if (finishMsg) finishMsg.textContent = "Fila fechada!";
+    if (finishSub) finishSub.textContent = "A fila foi fechada pelo estabelecimento e os clientes foram removidos automaticamente.";
+    if (finishTip) finishTip.textContent = "Nenhum cliente permanecerá nesta fila.";
+
+  } else if (modo === "fila_excluida") {
+    if (finishMsg) finishMsg.textContent = "Fila excluída!";
+    if (finishSub) finishSub.textContent = "A fila foi excluída pelo estabelecimento e os clientes foram removidos automaticamente.";
+    if (finishTip) finishTip.textContent = "Nenhum cliente permanecerá nesta fila.";
+
+  } else if (modo === "cancelado") {
     if (finishMsg) finishMsg.textContent = "Atendimento cancelado!";
     if (finishSub) finishSub.textContent = `${nome} não compareceu e foi removido da fila.`;
     if (finishTip) finishTip.textContent = "Você pode chamar o próximo cliente.";
+
   } else {
     if (finishMsg) finishMsg.textContent = "Atendimento finalizado!";
     if (finishSub) finishSub.textContent = `${nome} atendido com sucesso.`;
@@ -344,6 +359,49 @@ ws.onclose = () => {
 };
 }
 
+function getStatusRaioInfo(status) {
+  const s = String(status || "").toLowerCase();
+
+  if (s === "dentro_raio" || s === "no_raio") {
+    return {
+      texto: "🟢 Cliente dentro do raio",
+      itemClass: "in-radius",
+      textClass: "in-radius"
+    };
+  }
+
+  return {
+    texto: "🔴 Cliente fora do raio",
+    itemClass: "out-radius",
+    textClass: "out-radius"
+  };
+}
+
+function renderDemaisFila(lista) {
+  if (!demaisFilaListaEl) return;
+
+  if (!Array.isArray(lista) || !lista.length) {
+    demaisFilaListaEl.innerHTML = `
+      <div class="queue-empty">Nenhum outro cliente aguardando</div>
+    `;
+    return;
+  }
+
+  demaisFilaListaEl.innerHTML = lista.map((item) => {
+    const raio = getStatusRaioInfo(item.status_localizacao);
+
+    return `
+      <div class="queue-item ${raio.itemClass}">
+        <div class="queue-item-left">
+          <div class="queue-item-name">${item.nome || "—"}</div>
+          <div class="queue-item-sub">Posição #${pad3(item.posicao || 0)}</div>
+          <div class="queue-item-status ${raio.textClass}">${raio.texto}</div>
+        </div>
+        <span class="badge badge-wait">Aguardando</span>
+      </div>
+    `;
+  }).join("");
+}
 // ================= API: STATUS ATENDIMENTO =================
 async function refreshAtendimento() {
   try {
@@ -354,6 +412,7 @@ async function refreshAtendimento() {
       if (proxPosEl) proxPosEl.textContent = "—";
       if (proxBadgeEl) proxBadgeEl.textContent = "—";
       if (filaInfo) filaInfo.textContent = "";
+      renderDemaisFila([]);
       atualCache = null;
       proxCache = null;
       setButtons({});
@@ -393,15 +452,28 @@ async function refreshAtendimento() {
     const prox = data.proximo || null;
     proxCache = prox;
 
-    if (prox) {
-      if (proxNomeEl) proxNomeEl.textContent = prox.nome || "—";
-      if (proxPosEl) proxPosEl.textContent = `Posição #${pad3(prox.posicao || 1)}`;
-      if (proxBadgeEl) proxBadgeEl.textContent = "Aguardando";
+if (prox) {
+  if (proxNomeEl) proxNomeEl.textContent = prox.nome || "—";
+  if (proxPosEl) proxPosEl.textContent = `Posição #${pad3(prox.posicao || 1)}`;
+  if (proxBadgeEl) proxBadgeEl.textContent = "Aguardando";
+
+  if (statusRaioProximoEl) {
+    const status = String(prox.status_localizacao || "").toLowerCase();
+
+    if (status === "dentro_raio" || status === "no_raio") {
+      statusRaioProximoEl.textContent = "🟢 Cliente dentro do raio";
     } else {
-      if (proxNomeEl) proxNomeEl.textContent = "—";
-      if (proxPosEl) proxPosEl.textContent = "Sem próximo";
-      if (proxBadgeEl) proxBadgeEl.textContent = "—";
+      statusRaioProximoEl.textContent = "🔴 Cliente fora do raio";
     }
+  }
+} else {
+  if (proxNomeEl) proxNomeEl.textContent = "—";
+  if (proxPosEl) proxPosEl.textContent = "Sem próximo";
+  if (proxBadgeEl) proxBadgeEl.textContent = "—";
+  if (statusRaioProximoEl) statusRaioProximoEl.textContent = "—";
+}
+
+renderDemaisFila(data.demais_na_fila || []);
 
     const temAtual = !!atual;
     const temProx = !!prox;

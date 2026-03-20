@@ -100,6 +100,35 @@ const addrUf = document.getElementById("addrUf");
 const addrError = document.getElementById("addrError");
 const btnBuscarCep = document.getElementById("btnBuscarCep");
 const btnSalvarEndereco = document.getElementById("btnSalvarEndereco");
+const togglePass = document.getElementById("togglePass");
+const toggleSignupPass = document.getElementById("toggleSignupPass");
+
+function configurarToggleSenha(botao, input) {
+  if (!botao || !input) return;
+
+  const atualizarAcessibilidade = () => {
+    const mostrando = input.type === "text";
+    botao.setAttribute("aria-label", mostrando ? "Ocultar senha" : "Mostrar senha");
+    botao.setAttribute("aria-pressed", mostrando ? "true" : "false");
+  };
+
+  botao.addEventListener("click", (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    input.type = input.type === "password" ? "text" : "password";
+    atualizarAcessibilidade();
+    input.focus({ preventScroll: true });
+
+    const fim = input.value.length;
+    try { input.setSelectionRange(fim, fim); } catch {}
+  });
+
+  atualizarAcessibilidade();
+}
+
+configurarToggleSenha(togglePass, bizPass);
+configurarToggleSenha(toggleSignupPass, signupBizPass);
 
 // ================= UI MODOS =================
 

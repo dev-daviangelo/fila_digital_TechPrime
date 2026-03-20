@@ -957,28 +957,23 @@ input:focus, textarea:focus{
 
 /* número que acompanha o slider */
 #rangeValue{
-  position:absolute;
-  top:-22px;
-  left:0;
-
-  transform:translateX(-50%);
-
-  font-size:11px;
-  font-weight:600;
-  letter-spacing:.2px;
-
-  color:#ff9a1a;
-
-  background:rgba(255,255,255,.06);
-  border:1px solid rgba(255,255,255,.08);
-
-  padding:2px 7px;
-  border-radius:6px;
-
-  backdrop-filter:blur(4px);
-
-  pointer-events:none;
-  transition:.12s;
+  position: absolute;
+  top: -10px;
+  left: 0;
+  transform: translateX(-50%);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: .2px;
+  color: #ff9a1a;
+  background: rgba(255,255,255,.06);
+  border: 1px solid rgba(255,255,255,.08);
+  padding: 2px 7px;
+  border-radius: 6px;
+  backdrop-filter: blur(4px);
+  pointer-events: none;
+  transition: left .12s ease, transform .12s ease;
+  z-index: 2;
+  white-space: nowrap;
 }
 
 /* evita cortar nas pontas */

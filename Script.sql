@@ -269,3 +269,43 @@ CREATE INDEX idx_password_reset_email_id
 
 CREATE INDEX idx_password_reset_expires
   ON password_reset (expires_at);
+  
+  INSERT INTO estabelecimento (
+  nome,
+  cnpj,
+  categoria,
+  cidade,
+  estado,
+  telefone,
+  cep,
+  numero,
+  complemento,
+  logradouro,
+  bairro,
+  cidade_end,
+  uf,
+  latitude,
+  longitude,
+  raio_alerta,
+  email,
+  senha
+) VALUES (
+  'SENAI Betim - Maria Madalena Nogueira',
+  '00000000000001',
+  'OUTROS',
+  'Betim',
+  'MG',
+  '31991722376',
+  '32600075',
+  '55',
+  NULL,
+  'Avenida Amazonas',
+  'Centro',
+  'Betim',
+  'MG',
+  -19.96475640,
+  -44.19351800,
+  0,
+  'senai@teste.com',
+  '5b09b9851902b584b714a1ebc0eb06bcb142ac64f754669a34a4791ede1cd415'
+);

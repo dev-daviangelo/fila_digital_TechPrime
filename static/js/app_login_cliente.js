@@ -32,6 +32,19 @@ const btnAcompanhar = document.querySelector(".successBtn");
 const btnClient = document.getElementById("btnClient");
 
 
+(function redirecionarSeJaEstiverNaFila() {
+  const filaId = getFilaId();
+  if (!filaId) return;
+
+  const clienteId =
+    Number(sessionStorage.getItem(`cliente_session_${filaId}`) || 0) ||
+    Number(localStorage.getItem(`cliente_session_${filaId}`) || 0);
+
+  if (clienteId > 0) {
+    irParaFila();
+  }
+})();
+
 // ================= VALIDAÇÃO =================
 function nomeValido(nome) {
   return nome && nome.trim().length >= 3;
@@ -164,9 +177,14 @@ form?.addEventListener("submit", async (e) => {
     localStorage.setItem(`fila_cliente_id_${filaId}`, String(filaClienteId));
     localStorage.setItem(`cliente_nome_${filaId}`, nome);
 
-    const posicao = Number(data.posicao || data.pos || data.numero || 1);
+   const posicao = Number(data.posicao || data.pos || data.numero || 1);
 
-    abrirSucesso(nome, posicao);
+    // opcional: ainda atualiza o número localmente
+    queueNumber && (queueNumber.textContent = `#${String(posicao).padStart(3, "0")}`);
+
+    // ✅ vai direto para acompanhar fila
+    irParaFila();
+    return;
 
   } catch (err) {
     console.error(err);

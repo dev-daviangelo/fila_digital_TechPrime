@@ -416,10 +416,21 @@ async function carregarFilas() {
       return;
     }
 
-    // ✅ seleção default: pega ABERTA primeiro, senão FECHADA
+  // ✅ se vier filaId na URL, seleciona ela primeiro
+  const filaIdUrl = new URLSearchParams(window.location.search).get("filaId");
+
+  if (filaIdUrl) {
+    const filaDaUrl = filas.find((f) => String(f.__id) === String(filaIdUrl));
+    if (filaDaUrl) {
+      filaSelecionada = filaDaUrl;
+    }
+  }
+
+  if (!filaSelecionada) {
     const primeiraAberta = filas.find((f) => normalizarStatus(f.status, f.ativa) === "ABERTA");
     const primeiraFechada = filas.find((f) => normalizarStatus(f.status, f.ativa) === "FECHADA");
     filaSelecionada = primeiraAberta || primeiraFechada || filas[0] || null;
+  }
 
     renderTudo();
   } catch (err) {

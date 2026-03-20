@@ -1,6 +1,4 @@
-# main.py (COMPLETA E ATUALIZADA) — CORRIGIDA SEM MUDAR O QUE NÃO PRECISA
-# ✅ Correção principal: Atendimento agora considera CHAMADO + AGUARDANDO (compatível com Dashboard)
-# ✅ Mantém tudo que você já implementou
+
 
 from fastapi import FastAPI, HTTPException, Query, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
@@ -26,7 +24,7 @@ from email.message import EmailMessage
 from datetime import datetime, timedelta
 from pathlib import Path
 from dotenv import load_dotenv
-load_dotenv(dotenv_path="arquivo.env", override=True)
+load_dotenv(dotenv_path=".env", override=True)
 
 BASE_DIR = Path(__file__).resolve().parent
 load_dotenv(BASE_DIR / ".env", override=True)
@@ -206,38 +204,69 @@ def hash_code(code: str) -> str:
     return hashlib.sha256((code.strip() + SECRET_KEY).encode()).hexdigest()
 
 def send_reset_email(to_email: str, code: str) -> bool:
-    import os, smtplib
+    import os
+    import smtplib
+    import ssl
     from email.message import EmailMessage
 
     smtp_host = (os.getenv("SMTP_HOST") or "").strip()
     smtp_port = int((os.getenv("SMTP_PORT") or "587").strip())
     smtp_user = (os.getenv("SMTP_USER") or "").strip()
-    smtp_pass = (os.getenv("SMTP_PASS") or "").strip().strip('"').strip("'").replace(" ", "")
-    smtp_from = (os.getenv("SMTP_FROM") or "").strip() or smtp_user or "no-reply@local"
+    smtp_pass = (os.getenv("SMTP_PASS") or "").strip().strip('"').strip("'")
+    smtp_from = (os.getenv("SMTP_FROM") or "").strip() or smtp_user
 
-    if not (smtp_host and smtp_user and smtp_pass):
-        print(f"[RESET-SENHA] SMTP não configurado. Código para {to_email}: {code}")
+    if not (smtp_host and smtp_port and smtp_user and smtp_pass and smtp_from):
+        print("[SMTP] Configuração incompleta no .env")
+        print("SMTP_HOST =", smtp_host)
+        print("SMTP_PORT =", smtp_port)
+        print("SMTP_USER =", smtp_user)
+        print("SMTP_FROM =", smtp_from)
         return False
 
     msg = EmailMessage()
     msg["Subject"] = "Recuperação de senha - Fila Digital"
     msg["From"] = smtp_from
     msg["To"] = to_email
-    msg.set_content(f"Seu código de recuperação é: {code}\n\nEle expira em 15 minutos.")
+    msg.set_content(
+        f"Seu código de recuperação é: {code}\n\n"
+        f"Ele expira em 15 minutos."
+    )
 
     try:
-        with smtplib.SMTP(smtp_host, smtp_port, timeout=20) as server:
-            server.ehlo()
-            server.starttls()
-            server.ehlo()
-            server.login(smtp_user, smtp_pass)
-            server.send_message(msg)
+        # Porta 465 = SSL direto
+        if smtp_port == 465:
+            context = ssl.create_default_context()
+            with smtplib.SMTP_SSL(smtp_host, smtp_port, timeout=20, context=context) as server:
+                server.login(smtp_user, smtp_pass)
+                server.send_message(msg)
 
-        print("[SMTP] ✅ Email enviado para:", to_email)
+        # Porta 587 = STARTTLS
+        elif smtp_port == 587:
+            with smtplib.SMTP(smtp_host, smtp_port, timeout=20) as server:
+                server.ehlo()
+                server.starttls()
+                server.ehlo()
+                server.login(smtp_user, smtp_pass)
+                server.send_message(msg)
+
+        # Outras portas = tenta sem TLS automático
+        else:
+            with smtplib.SMTP(smtp_host, smtp_port, timeout=20) as server:
+                server.ehlo()
+                server.login(smtp_user, smtp_pass)
+                server.send_message(msg)
+
+        print(f"[SMTP] ✅ Email enviado para: {to_email}")
         return True
 
     except smtplib.SMTPAuthenticationError as e:
-        print("[SMTP] ❌ 535 (login recusado). Confirme senha de app e SMTP_USER. Detalhe:", repr(e))
+        print("[SMTP] ❌ Erro de autenticação:", repr(e))
+        print("[SMTP] Verifique usuário, senha e senha de app.")
+        return False
+
+    except smtplib.SMTPServerDisconnected as e:
+        print("[SMTP] ❌ Servidor desconectou:", repr(e))
+        print("[SMTP] Verifique se a porta corresponde ao tipo de conexão (465/SSL ou 587/STARTTLS).")
         return False
 
     except Exception as e:
@@ -1294,19 +1323,44 @@ async def fechar_fila(fila_id: int):
             raise HTTPException(status_code=404, detail="Fila não encontrada")
 
         cur2 = conn.cursor()
+
+        # fecha a fila
         cur2.execute("""
             UPDATE fila
             SET status='FECHADA', data_fechamento=%s
             WHERE idFila=%s
         """, (datetime.now(), fila_id))
+
+        # remove todos os clientes ainda ativos nela
+        try:
+            cur2.execute("""
+                UPDATE fila_cliente
+                SET status='SAIU',
+                    data_fim=NOW()
+                WHERE fila_idFila=%s
+                  AND status IN ('AGUARDANDO','CHAMADO','EM_ATENDIMENTO')
+            """, (fila_id,))
+        except Exception:
+            cur2.execute("""
+                UPDATE fila_cliente
+                SET status='SAIU'
+                WHERE fila_idFila=%s
+                  AND status IN ('AGUARDANDO','CHAMADO','EM_ATENDIMENTO')
+            """, (fila_id,))
+
         conn.commit()
 
         cur2.close()
         cur.close()
         conn.close()
 
-        await notify_fila_update(fila_id, "FILA_FECHADA", {"fila_id": fila_id})
+        await notify_fila_update(fila_id, "FILA_FECHADA", {
+            "fila_id": fila_id,
+            "motivo": "fila_fechada"
+        })
+
         return {"ok": True, "status": "FECHADA"}
+
     except HTTPException:
         raise
     except Exception as e:
@@ -1330,19 +1384,44 @@ async def excluir_fila(fila_id: int):
             raise HTTPException(status_code=404, detail="Fila não encontrada")
 
         cur2 = conn.cursor()
+
+        # exclui logicamente a fila
         cur2.execute("""
             UPDATE fila
             SET status='EXCLUIDA', data_fechamento=%s
             WHERE idFila=%s
         """, (datetime.now(), fila_id))
+
+        # remove todos os clientes ainda ativos nela
+        try:
+            cur2.execute("""
+                UPDATE fila_cliente
+                SET status='SAIU',
+                    data_fim=NOW()
+                WHERE fila_idFila=%s
+                  AND status IN ('AGUARDANDO','CHAMADO','EM_ATENDIMENTO')
+            """, (fila_id,))
+        except Exception:
+            cur2.execute("""
+                UPDATE fila_cliente
+                SET status='SAIU'
+                WHERE fila_idFila=%s
+                  AND status IN ('AGUARDANDO','CHAMADO','EM_ATENDIMENTO')
+            """, (fila_id,))
+
         conn.commit()
 
         cur2.close()
         cur.close()
         conn.close()
 
-        await notify_fila_update(fila_id, "FILA_EXCLUIDA", {"fila_id": fila_id})
+        await notify_fila_update(fila_id, "FILA_EXCLUIDA", {
+            "fila_id": fila_id,
+            "motivo": "fila_excluida"
+        })
+
         return {"ok": True, "status": "EXCLUIDA"}
+
     except HTTPException:
         raise
     except Exception as e:
@@ -1762,6 +1841,42 @@ async def status_cliente_fila(fila_id: int, cliente_id: int):
         conn = get_conn()
         cur = conn.cursor(dictionary=True)
 
+        # 1) verifica a fila primeiro
+        cur.execute("""
+            SELECT idFila, status, nome, raio_km
+            FROM fila
+            WHERE idFila = %s
+            LIMIT 1
+        """, (fila_id,))
+        fila_info = cur.fetchone()
+
+        if not fila_info:
+            cur.close()
+            conn.close()
+            return {
+                "encerrado": True,
+                "motivo": "fila_excluida"
+            }
+
+        fila_status = (fila_info.get("status") or "").upper()
+
+        if fila_status == "FECHADA":
+            cur.close()
+            conn.close()
+            return {
+                "encerrado": True,
+                "motivo": "fila_fechada"
+            }
+
+        if fila_status == "EXCLUIDA":
+            cur.close()
+            conn.close()
+            return {
+                "encerrado": True,
+                "motivo": "fila_excluida"
+            }
+
+        # 2) se a fila estiver ativa, procura o cliente nela
         cur.execute("""
             SELECT
                 fc.idFilaCliente,
@@ -1786,7 +1901,8 @@ async def status_cliente_fila(fila_id: int, cliente_id: int):
             cur.close()
             conn.close()
             return {
-                "encerrado": True
+                "encerrado": True,
+                "motivo": "cancelado"
             }
 
         fila_cliente_id = int(row["idFilaCliente"])
@@ -1971,54 +2087,53 @@ def _fila_get_status(conn, fila_id: int):
         cur.close()
         raise HTTPException(status_code=404, detail="Fila não encontrada")
 
+    # Cliente em atendimento agora
     cur.execute("""
-    SELECT
-        fc.idFilaCliente,
-        c.nome,
-        fc.status_localizacao
-    FROM fila_cliente fc
-    JOIN cliente c ON c.idCliente = fc.cliente_idCliente
-    WHERE fc.fila_idFila = %s AND fc.status = 'EM_ATENDIMENTO'
-    ORDER BY fc.data_entrada ASC, fc.idFilaCliente ASC
-    LIMIT 1
-""", (fila_id,))
+        SELECT
+            fc.idFilaCliente,
+            c.nome,
+            fc.status_localizacao
+        FROM fila_cliente fc
+        JOIN cliente c ON c.idCliente = fc.cliente_idCliente
+        WHERE fc.fila_idFila = %s
+          AND fc.status = 'EM_ATENDIMENTO'
+        ORDER BY fc.data_entrada ASC, fc.idFilaCliente ASC
+        LIMIT 1
+    """, (fila_id,))
     atual = cur.fetchone()
 
-    # ✅✅ CORRIGIDO: total considera CHAMADO + AGUARDANDO (compatível com Dashboard)
+    # Total aguardando/chamado
     cur.execute("""
         SELECT COUNT(*) AS total
         FROM fila_cliente
-        WHERE fila_idFila = %s AND status IN ('AGUARDANDO','CHAMADO')
+        WHERE fila_idFila = %s
+          AND status IN ('AGUARDANDO','CHAMADO')
     """, (fila_id,))
     aguardando_total = int((cur.fetchone() or {}).get("total", 0))
 
-    # ✅✅ CORRIGIDO: "próximo" prioriza CHAMADO e depois AGUARDANDO
+    # Lista completa da espera:
+    # 1º = próximo
+    # resto = demais clientes
     cur.execute("""
-        SELECT fc.idFilaCliente, c.nome, fc.status
+        SELECT
+            fc.idFilaCliente,
+            c.nome,
+            fc.status,
+            fc.status_localizacao
         FROM fila_cliente fc
         JOIN cliente c ON c.idCliente = fc.cliente_idCliente
-        WHERE fc.fila_idFila = %s AND fc.status IN ('CHAMADO','AGUARDANDO')
+        WHERE fc.fila_idFila = %s
+          AND fc.status IN ('CHAMADO','AGUARDANDO')
         ORDER BY
           CASE fc.status WHEN 'CHAMADO' THEN 0 ELSE 1 END,
           fc.data_entrada ASC,
           fc.idFilaCliente ASC
-        LIMIT 1
     """, (fila_id,))
-    proximo = cur.fetchone()
+    fila_espera = cur.fetchall() or []
 
     cur.close()
 
-    prox_obj = None
-    if proximo:
-        prox_obj = {
-            "fila_cliente_id": int(proximo["idFilaCliente"]),
-            "nome": proximo["nome"],
-            "posicao": 1,
-            "status": (proximo.get("status") or "AGUARDANDO")
-        }
-
     atual_obj = None
-
     if atual:
         atual_obj = {
             "fila_cliente_id": int(atual["idFilaCliente"]),
@@ -2026,15 +2141,38 @@ def _fila_get_status(conn, fila_id: int):
             "status_localizacao": atual.get("status_localizacao")
         }
 
+    prox_obj = None
+    demais_obj = []
+
+    if fila_espera:
+        primeiro = fila_espera[0]
+
+        prox_obj = {
+            "fila_cliente_id": int(primeiro["idFilaCliente"]),
+            "nome": primeiro["nome"],
+            "posicao": 1,
+            "status": (primeiro.get("status") or "AGUARDANDO"),
+            "status_localizacao": primeiro.get("status_localizacao")
+        }
+
+        for idx, item in enumerate(fila_espera[1:], start=2):
+            demais_obj.append({
+                "fila_cliente_id": int(item["idFilaCliente"]),
+                "nome": item["nome"],
+                "posicao": idx,
+                "status": (item.get("status") or "AGUARDANDO"),
+                "status_localizacao": item.get("status_localizacao")
+            })
+
     return {
         "fila_id": int(fila["idFila"]),
         "fila_status": (fila.get("status") or "").upper(),
         "aguardando_total": aguardando_total,
         "tempo_medio_min": calcular_tempo_medio_fila_min(conn, fila_id, padrao=12),
         "atual": atual_obj,
-        "proximo": prox_obj
+        "proximo": prox_obj,
+        "demais_na_fila": demais_obj
     }
-
 
 @app.get("/api/filas/{fila_id}/atendimento/status")
 def atendimento_status(fila_id: int):
